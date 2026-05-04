@@ -41,6 +41,33 @@ OUTPUT_DIR = Path.home() / "Downloads" / "thsr_receipts"
 DEBUG_DIR = Path("/tmp/thsr-debug")
 COMPANIES_PATH = Path.home() / ".config" / "thsr-receipt" / "companies.json"
 
+# 高鐵 12 站中英文 label（依 HSR 網站 select option 文字）
+HSR_STATIONS = {
+    "南港": "南港 (Nangang)",
+    "台北": "台北 (Taipei)",
+    "板橋": "板橋 (Banqiao)",
+    "桃園": "桃園 (Taoyuan)",
+    "新竹": "新竹 (Hsinchu)",
+    "苗栗": "苗栗 (Miaoli)",
+    "台中": "台中 (Taichung)",
+    "彰化": "彰化 (Changhua)",
+    "雲林": "雲林 (Yunlin)",
+    "嘉義": "嘉義 (Chiayi)",
+    "台南": "台南 (Tainan)",
+    "左營": "左營 (Zuoying)",
+}
+# 常見繁體別名 → 標準
+HSR_STATION_ALIASES = {"臺北": "台北", "臺中": "台中", "臺南": "台南"}
+
+
+def hsr_station_label(name: str) -> str:
+    name = HSR_STATION_ALIASES.get(name.strip(), name.strip())
+    if name not in HSR_STATIONS:
+        raise ValueError(
+            f"不認得高鐵站 {name!r}。合法清單：{', '.join(HSR_STATIONS.keys())}"
+        )
+    return HSR_STATIONS[name]
+
 
 def safe_filename(s: str) -> str:
     s = s.strip().replace("/", "-").replace(".", "-")
@@ -100,10 +127,14 @@ def download_receipt(args, headless: bool = True) -> Path:
     seat_value = "res" if args.seat_type == "reserved" else "free"
 
     print(f"🚄 高鐵電子車票證明下載")
-    print(f"   訂位代號: {args.pnr}")
+    print(f"   票種類型: {args.ticket_type}")
+    if args.ticket_type == "texpress" and args.pnr:
+        print(f"   訂位代號: {args.pnr}")
     print(f"   車票號碼: {args.tid}")
     print(f"   搭乘日期: {date_dashed}")
-    print(f"   票種: {'對號座' if seat_value == 'res' else '自由座'}")
+    print(f"   座位: {'對號座' if seat_value == 'res' else '自由座'}")
+    if args.from_st: print(f"   起站: {args.from_st}")
+    if args.to_st: print(f"   訖站: {args.to_st}")
     print(f"   統編: {args.tax_id}")
     print(f"   公司名稱: {args.company}")
 
@@ -114,37 +145,52 @@ def download_receipt(args, headless: bool = True) -> Path:
 
         page.goto(QUERY_URL, wait_until="domcontentloaded", timeout=30000)
 
-        # 1. 主 tab → T Express
-        page.locator('a:visible:has-text("T Express")').first.click()
-        page.wait_for_load_state("networkidle", timeout=10000)
+        if args.ticket_type == "magnetic":
+            # 磁票/QR Code 紙票 是預設第一個 tab，不用切
+            # 表單欄位：depDate + depStation + arrStation + ticketType + tix
+            if not args.from_st or not args.to_st:
+                raise RuntimeError("磁票/紙票必須提供 --from 與 --to 站名")
 
-        # 2. sub-tab → 電子車票證明
-        page.locator('a:visible:has-text("電子車票證明")').first.click()
-        page.wait_for_load_state("networkidle", timeout=10000)
+            date_input = page.locator('input#depDate').first
+            date_input.evaluate("el => el.removeAttribute('readonly')")
+            date_input.fill(date_dashed)
+            date_input.dispatch_event('change')
 
-        # 3. 選對號座 / 自由座 → 觸發欄位顯示
-        page.locator('select#carClassTypeProof').first.select_option(value=seat_value)
-        page.wait_for_timeout(1500)
-
-        # 4. 填表 — 對號座 / 自由座欄位不一樣
-        # 對號座: pnr + tid + goTravelDate（id 都帶 "Proof"）
-        # 自由座: 只有 tid + txFreeDateProof（無 pnr）
-        if seat_value == "res":
-            # 對號座 — 注意頁面同時存在 #txPnr（一般查詢）與 #txProofPnr（電子證明），鎖後者
-            if not args.pnr:
-                raise RuntimeError("對號座必須提供 --pnr 訂位代號")
-            page.locator('input#txProofPnr').first.fill(args.pnr)
-            page.locator('input[name="tid"]:visible').first.fill(args.tid)
-            date_input = page.locator('input#goTravelDate:visible').first
+            # 起訖站 — 用完整中英 label 比對 (e.g., "南港 (Nangang)")
+            page.locator('select#depStation').first.select_option(
+                label=hsr_station_label(args.from_st)
+            )
+            page.locator('select#arrStation').first.select_option(
+                label=hsr_station_label(args.to_st)
+            )
+            # 自由座只能用車票號碼；對號座也選車票號碼（user 給的是 tid）
+            page.locator('select#ticketType').first.select_option(label="車票號碼")
+            page.locator('input#tix').first.fill(args.tid)
         else:
-            # 自由座 — 沒有訂位代號欄位
-            page.locator('input[name="txFreeTid"]:visible').first.fill(args.tid)
-            date_input = page.locator('input#txFreeDateProof:visible').first
+            # T Express path: 主 tab 切 T Express → sub-tab 切電子車票證明
+            page.locator('a:visible:has-text("T Express")').first.click()
+            page.wait_for_load_state("networkidle", timeout=10000)
+            page.locator('a:visible:has-text("電子車票證明")').first.click()
+            page.wait_for_load_state("networkidle", timeout=10000)
 
-        # readonly datepicker 共通處理
-        date_input.evaluate("el => el.removeAttribute('readonly')")
-        date_input.fill(date_dashed)  # HSR datepicker 要 YYYY-MM-DD
-        date_input.dispatch_event('change')
+            # 選對號座 / 自由座 → 觸發欄位顯示
+            page.locator('select#carClassTypeProof').first.select_option(value=seat_value)
+            page.wait_for_timeout(1500)
+
+            # 表單欄位 — 對號座 / 自由座不一樣
+            if seat_value == "res":
+                if not args.pnr:
+                    raise RuntimeError("T Express 對號座必須提供 --pnr 訂位代號")
+                page.locator('input#txProofPnr').first.fill(args.pnr)
+                page.locator('input[name="tid"]:visible').first.fill(args.tid)
+                date_input = page.locator('input#goTravelDate:visible').first
+            else:
+                page.locator('input[name="txFreeTid"]:visible').first.fill(args.tid)
+                date_input = page.locator('input#txFreeDateProof:visible').first
+
+            date_input.evaluate("el => el.removeAttribute('readonly')")
+            date_input.fill(date_dashed)
+            date_input.dispatch_event('change')
 
         page.screenshot(path=str(DEBUG_DIR / "01-form-filled.png"), full_page=True)
 
@@ -168,47 +214,60 @@ def download_receipt(args, headless: bool = True) -> Path:
             except PWTimeout:
                 continue
 
-        # 6. 結果頁：填統編 + 公司名稱
-        try:
-            page.locator('input#iUniNumber').first.fill(args.tax_id)
-        except Exception as e:
-            raise RuntimeError(f"找不到 input#iUniNumber：{e}（截圖 /tmp/thsr-debug/02-after-query.png）")
-        # onchange 會 trigger 統編驗證 + 自動帶公司名 — 觸發一下
-        page.locator('input#iUniNumber').first.dispatch_event('change')
-        page.wait_for_timeout(500)
-        # 處理「統編不符合邏輯」的警告 modal（若出現）
-        for confirm_btn in ['button#x2_btn', 'button:visible:has-text("繼續")']:
+        # 6+7. 結果頁 → 統編 + 公司名稱 → 下載
+        # T Express 跟磁票流程不一樣：
+        #   T Express: 結果頁有靜態 #iUniNumber/#iBuyer 欄位，先填、再點 download_btn（會跳「僅能下載一次」modal，按 #x2_btn 確認）
+        #   磁票:      結果頁無靜態欄位，點 download_btn 後 modal 才彈出含統編+公司名 input，填完按 #x2_btn 觸發下載
+        if args.ticket_type == "magnetic":
+            # 磁票：onclick 直接呼叫 downloadPDF()，無 modal、無統編欄位
+            # HSR 限制：磁票 PDF 是「交易紀錄」，非報稅扣抵憑證，不蓋統編戳章
+            download_link = page.locator('a.download_btn:visible').first
+            if not download_link.is_visible(timeout=3000):
+                raise RuntimeError(
+                    "找不到磁票結果頁的下載按鈕。\n"
+                    "如果 HSR 顯示「已下載」狀態，可重新查詢一次嘗試（交易紀錄通常可重複下載）。\n"
+                    "截圖 /tmp/thsr-debug/02-after-query.png"
+                )
+
+            with page.expect_download(timeout=30000) as dl_info:
+                download_link.click()
+            download = dl_info.value
+        else:
+            # T Express：靜態頁面填 iUniNumber + iBuyer 後點下載
             try:
-                btn = page.locator(confirm_btn).first
-                if btn.is_visible(timeout=1500):
-                    btn.click()
-                    break
-            except Exception:
-                continue
+                page.locator('input#iUniNumber').first.fill(args.tax_id)
+            except Exception as e:
+                raise RuntimeError(f"找不到 input#iUniNumber：{e}（截圖 /tmp/thsr-debug/02-after-query.png）")
+            page.locator('input#iUniNumber').first.dispatch_event('change')
+            page.wait_for_timeout(500)
+            # 「統編不符合邏輯」警告 modal（若出現）
+            for confirm_btn in ['button#x2_btn', 'button:visible:has-text("繼續")']:
+                try:
+                    btn = page.locator(confirm_btn).first
+                    if btn.is_visible(timeout=1500):
+                        btn.click()
+                        break
+                except Exception:
+                    continue
+            page.locator('input#iBuyer').first.fill(args.company)
+            page.locator('input#iBuyer').first.dispatch_event('change')
+            page.wait_for_timeout(500)
+            page.screenshot(path=str(DEBUG_DIR / "03-tax-filled.png"), full_page=True)
 
-        page.locator('input#iBuyer').first.fill(args.company)
-        page.locator('input#iBuyer').first.dispatch_event('change')
-        page.wait_for_timeout(500)
-
-        page.screenshot(path=str(DEBUG_DIR / "03-tax-filled.png"), full_page=True)
-
-        # 7. 點對應 tid 的下載按鈕（onclick 裡有 tid）→ 跳「僅能下載一次」確認 modal → 按確認下載
-        download_link = page.locator(f'a.download_btn[onclick*="{args.tid}"]').first
-        if not download_link.is_visible(timeout=3000):
-            raise RuntimeError(
-                f"找不到 tid={args.tid} 的下載按鈕。可能此 tid 不在這個訂位代號裡，"
-                f"或網頁結構改了。截圖 /tmp/thsr-debug/03-tax-filled.png"
-            )
-
-        with page.expect_download(timeout=30000) as dl_info:
-            download_link.click()
-            # 「本電子車票證明僅能下載一次！是否要繼續下載？」modal
-            try:
-                page.locator('button#x2_btn').first.click(timeout=5000)
-            except Exception:
-                pass
-
-        download = dl_info.value
+            # 點對應 tid 的下載按鈕 → 跳「僅能下載一次」確認 modal → 按 #x2_btn
+            download_link = page.locator(f'a.download_btn[onclick*="{args.tid}"]').first
+            if not download_link.is_visible(timeout=3000):
+                raise RuntimeError(
+                    f"找不到 tid={args.tid} 的下載按鈕。可能此 tid 不在這個訂位代號裡，"
+                    f"或網頁結構改了。截圖 /tmp/thsr-debug/03-tax-filled.png"
+                )
+            with page.expect_download(timeout=30000) as dl_info:
+                download_link.click()
+                try:
+                    page.locator('button#x2_btn').first.click(timeout=5000)
+                except Exception:
+                    pass
+            download = dl_info.value
 
         parts = [
             safe_filename(date_dashed),
@@ -255,6 +314,8 @@ def main():
     parser.add_argument("--to", dest="to_st", default="", help="迄站（中文，僅用於檔名）")
     parser.add_argument("--seat-type", choices=["reserved", "free"], default="reserved",
                         help="對號座 reserved（預設）/ 自由座 free")
+    parser.add_argument("--ticket-type", choices=["texpress", "magnetic"], default="texpress",
+                        help="texpress = T Express App 電子票（預設）/ magnetic = 磁票/QR Code 紙票（現場/超商買的）")
     parser.add_argument("--tax-id", default=None, help="統一編號（8 碼）。優先序：CLI > --company-label > companies.json 單筆 > env THSR_TAX_ID > Keychain")
     parser.add_argument("--company", default=None, help="營利事業名稱（同上優先序）")
     parser.add_argument("--company-label", default=None, help="從 ~/.config/thsr-receipt/companies.json 挑公司（用 label 比對）")
@@ -275,9 +336,14 @@ def main():
             print(f"   • {label}  [統編 {c['tax_id']}]  {c['name']}")
         return
 
-    # 一般下載流程：tid / date 必填，pnr 對號座必填、自由座可省
+    # 必填檢查
     required = [("--tid", args.tid), ("--date", args.date)]
-    if args.seat_type == "reserved":
+    if args.ticket_type == "magnetic":
+        # 磁票/紙票：要 from / to 站名（HSR 表單要 select）
+        required.append(("--from", args.from_st))
+        required.append(("--to", args.to_st))
+    elif args.seat_type == "reserved":
+        # T Express 對號座要訂位代號
         required.append(("--pnr", args.pnr))
     missing = [name for name, val in required if not val]
     if missing:
