@@ -166,14 +166,20 @@ def download_receipt(booking_code: str, id_number: str, headless: bool = True) -
         browser.close()
 
         meta = extract_metadata_from_pdf(tmp_path)
-        parts = [safe_filename(meta.get("ride_date") or "unknown-date")]
+        ride_date = meta.get("ride_date") or "unknown-date"
+        parts = [safe_filename(ride_date)]
         if meta.get("from_st"):
             parts.append(safe_filename(meta["from_st"]))
         if meta.get("to_st"):
             parts.append(safe_filename(meta["to_st"]))
         # 優先用票號（每張票唯一，方便對帳），抓不到 fallback 用訂票代碼
         parts.append(safe_filename(meta.get("ticket_no") or booking_code))
-        save_path = OUTPUT_DIR / ("-".join(parts) + ".pdf")
+
+        # 依乘車日期 YYYY-MM 分資料夾（方便月報帳）
+        year_month = ride_date[:7] if len(ride_date) >= 7 else "unknown"
+        target_dir = OUTPUT_DIR / year_month
+        target_dir.mkdir(parents=True, exist_ok=True)
+        save_path = target_dir / ("-".join(parts) + ".pdf")
         tmp_path.rename(save_path)
         return save_path
 

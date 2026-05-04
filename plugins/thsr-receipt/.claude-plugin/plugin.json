@@ -1,7 +1,7 @@
 {
   "name": "thsr-receipt",
-  "version": "1.1.0",
-  "description": "自動下載台灣高鐵購票證明 / 交易紀錄 PDF 用於報帳（macOS）。支援 T Express 電子票（含對號座/自由座/統編戳章）與磁票/QR Code 紙票。自動 qpdf 解密。",
+  "version": "1.2.0",
+  "description": "自動下載台灣高鐵購票證明 / 交易紀錄 PDF 用於報帳（macOS）。支援 T Express 電子票（含對號座/自由座/統編戳章）與磁票/QR Code 紙票。自動 qpdf 解密、依 YYYY-MM 月份歸檔。",
   "author": {
     "name": "Alex Dee",
     "email": "alex@agoodbarn.com"

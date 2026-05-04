@@ -11,16 +11,16 @@
     {
       "name": "tra-receipt",
       "source": "./plugins/tra-receipt",
-      "description": "自動下載台鐵購票證明 PDF 用於報帳（macOS）",
-      "version": "1.0.0",
+      "description": "自動下載台鐵購票證明 PDF 用於報帳（macOS）— 自動依月份歸檔",
+      "version": "1.1.0",
       "category": "automation",
       "keywords": ["taiwan-railway", "tra", "receipt", "expense", "automation", "macos"]
     },
     {
       "name": "thsr-receipt",
       "source": "./plugins/thsr-receipt",
-      "description": "自動下載台灣高鐵購票證明 / 交易紀錄 PDF 用於報帳（macOS）— 支援 T Express 電子票 + 磁票/紙票",
-      "version": "1.1.0",
+      "description": "自動下載台灣高鐵購票證明 / 交易紀錄 PDF 用於報帳（macOS）— T Express + 磁票/紙票，依月份歸檔",
+      "version": "1.2.0",
       "category": "automation",
       "keywords": ["taiwan-hsr", "thsr", "high-speed-rail", "receipt", "expense", "automation", "macos"]
     }

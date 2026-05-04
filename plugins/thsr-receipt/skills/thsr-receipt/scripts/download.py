@@ -276,7 +276,12 @@ def download_receipt(args, headless: bool = True) -> Path:
             safe_filename(args.tid),  # 用 tid（每張票唯一），避免去回票 / 分票同 pnr 撞檔
         ]
         parts = [p for p in parts if p]
-        save_path = OUTPUT_DIR / ("-".join(parts) + ".pdf")
+
+        # 依乘車日期 YYYY-MM 分資料夾（方便月報帳）
+        year_month = date_dashed[:7] if len(date_dashed) >= 7 else "unknown"
+        target_dir = OUTPUT_DIR / year_month
+        target_dir.mkdir(parents=True, exist_ok=True)
+        save_path = target_dir / ("-".join(parts) + ".pdf")
         download.save_as(save_path)
 
         page.screenshot(path=str(DEBUG_DIR / "04-after-download.png"), full_page=True)
