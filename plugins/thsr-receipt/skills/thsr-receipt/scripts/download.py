@@ -23,6 +23,7 @@ Usage:
 import argparse
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -95,8 +96,7 @@ def download_receipt(args, headless: bool = True) -> Path:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     DEBUG_DIR.mkdir(parents=True, exist_ok=True)
 
-    date_dashed = args.date.strip()
-    date_slashed = date_dashed.replace("-", "/")
+    date_dashed = args.date.strip()  # HSR 要的格式就是 YYYY-MM-DD（dash 不是 slash）
     seat_value = "res" if args.seat_type == "reserved" else "free"
 
     print(f"🚄 高鐵電子車票證明下載")
@@ -126,16 +126,24 @@ def download_receipt(args, headless: bool = True) -> Path:
         page.locator('select#carClassTypeProof').first.select_option(value=seat_value)
         page.wait_for_timeout(1500)
 
-        # 4. 填表 — 電子車票證明 sub-tab 的欄位 id 是 txProofPnr / 等
-        # 注意：頁面上同時存在「一般查詢列印」與「電子車票證明」兩組 input[name="pnr"]，
-        # 一般查詢的 id=txPnr，電子證明的 id=txProofPnr，必須鎖 txProofPnr 才會在當前 sub-tab。
-        page.locator('input#txProofPnr').first.fill(args.pnr)
-        # tid 沒有 id，用 visible 限定 + 在 carClassTypeProof 同一個 form 範圍內
-        page.locator('input[name="tid"]:visible').first.fill(args.tid)
-        # goTravelDate 是 readonly 的 datepicker，先脫掉 readonly 再填，並 dispatch change 觸發驗證
-        date_input = page.locator('input#goTravelDate:visible').first
+        # 4. 填表 — 對號座 / 自由座欄位不一樣
+        # 對號座: pnr + tid + goTravelDate（id 都帶 "Proof"）
+        # 自由座: 只有 tid + txFreeDateProof（無 pnr）
+        if seat_value == "res":
+            # 對號座 — 注意頁面同時存在 #txPnr（一般查詢）與 #txProofPnr（電子證明），鎖後者
+            if not args.pnr:
+                raise RuntimeError("對號座必須提供 --pnr 訂位代號")
+            page.locator('input#txProofPnr').first.fill(args.pnr)
+            page.locator('input[name="tid"]:visible').first.fill(args.tid)
+            date_input = page.locator('input#goTravelDate:visible').first
+        else:
+            # 自由座 — 沒有訂位代號欄位
+            page.locator('input[name="txFreeTid"]:visible').first.fill(args.tid)
+            date_input = page.locator('input#txFreeDateProof:visible').first
+
+        # readonly datepicker 共通處理
         date_input.evaluate("el => el.removeAttribute('readonly')")
-        date_input.fill(date_slashed)
+        date_input.fill(date_dashed)  # HSR datepicker 要 YYYY-MM-DD
         date_input.dispatch_event('change')
 
         page.screenshot(path=str(DEBUG_DIR / "01-form-filled.png"), full_page=True)
@@ -161,66 +169,44 @@ def download_receipt(args, headless: bool = True) -> Path:
                 continue
 
         # 6. 結果頁：填統編 + 公司名稱
-        # 多種可能 selector，選擇先出現且 visible 的那個
-        tax_filled = False
-        for sel in [
-            'input[placeholder="統一編號"]',
-            'input[placeholder*="統一編號"]',
-            'input[name*="taxId" i]',
-            'input[name*="vatNo" i]',
-        ]:
+        try:
+            page.locator('input#iUniNumber').first.fill(args.tax_id)
+        except Exception as e:
+            raise RuntimeError(f"找不到 input#iUniNumber：{e}（截圖 /tmp/thsr-debug/02-after-query.png）")
+        # onchange 會 trigger 統編驗證 + 自動帶公司名 — 觸發一下
+        page.locator('input#iUniNumber').first.dispatch_event('change')
+        page.wait_for_timeout(500)
+        # 處理「統編不符合邏輯」的警告 modal（若出現）
+        for confirm_btn in ['button#x2_btn', 'button:visible:has-text("繼續")']:
             try:
-                el = page.locator(sel).first
-                if el.is_visible(timeout=2000):
-                    el.fill(args.tax_id)
-                    tax_filled = True
+                btn = page.locator(confirm_btn).first
+                if btn.is_visible(timeout=1500):
+                    btn.click()
                     break
             except Exception:
                 continue
-        if not tax_filled:
-            raise RuntimeError("找不到統一編號欄位，可能網頁結構改了。截圖看 /tmp/thsr-debug/02-after-query.png")
 
-        company_filled = False
-        for sel in [
-            'input[placeholder*="營利事業名稱"]',
-            'input[placeholder*="營業人"]',
-            'input[name*="companyName" i]',
-            'input[name*="vatTitle" i]',
-        ]:
-            try:
-                el = page.locator(sel).first
-                if el.is_visible(timeout=2000):
-                    el.fill(args.company)
-                    company_filled = True
-                    break
-            except Exception:
-                continue
-        if not company_filled:
-            print("⚠️ 找不到公司名稱欄位，繼續嘗試（可能個人申請也可以）")
+        page.locator('input#iBuyer').first.fill(args.company)
+        page.locator('input#iBuyer').first.dispatch_event('change')
+        page.wait_for_timeout(500)
 
         page.screenshot(path=str(DEBUG_DIR / "03-tax-filled.png"), full_page=True)
 
-        # 7. 找下載 / 列印按鈕
-        download_clicked = False
+        # 7. 點對應 tid 的下載按鈕（onclick 裡有 tid）→ 跳「僅能下載一次」確認 modal → 按確認下載
+        download_link = page.locator(f'a.download_btn[onclick*="{args.tid}"]').first
+        if not download_link.is_visible(timeout=3000):
+            raise RuntimeError(
+                f"找不到 tid={args.tid} 的下載按鈕。可能此 tid 不在這個訂位代號裡，"
+                f"或網頁結構改了。截圖 /tmp/thsr-debug/03-tax-filled.png"
+            )
+
         with page.expect_download(timeout=30000) as dl_info:
-            for sel in [
-                'button:visible:has-text("下載電子車票證明")',
-                'a:visible:has-text("下載電子車票證明")',
-                'button:visible:has-text("下載")',
-                'a:visible:has-text("下載")',
-                'button:visible:has-text("列印")',
-                'button:visible:has-text("確認")',
-            ]:
-                try:
-                    el = page.locator(sel).first
-                    if el.is_visible(timeout=2000):
-                        el.click()
-                        download_clicked = True
-                        break
-                except Exception:
-                    continue
-            if not download_clicked:
-                raise RuntimeError("找不到下載 / 列印按鈕。截圖 /tmp/thsr-debug/03-tax-filled.png")
+            download_link.click()
+            # 「本電子車票證明僅能下載一次！是否要繼續下載？」modal
+            try:
+                page.locator('button#x2_btn').first.click(timeout=5000)
+            except Exception:
+                pass
 
         download = dl_info.value
 
@@ -228,7 +214,7 @@ def download_receipt(args, headless: bool = True) -> Path:
             safe_filename(date_dashed),
             safe_filename(args.from_st) if args.from_st else "",
             safe_filename(args.to_st) if args.to_st else "",
-            safe_filename(args.pnr),
+            safe_filename(args.tid),  # 用 tid（每張票唯一），避免去回票 / 分票同 pnr 撞檔
         ]
         parts = [p for p in parts if p]
         save_path = OUTPUT_DIR / ("-".join(parts) + ".pdf")
@@ -236,12 +222,33 @@ def download_receipt(args, headless: bool = True) -> Path:
 
         page.screenshot(path=str(DEBUG_DIR / "04-after-download.png"), full_page=True)
         browser.close()
-        return save_path
+
+    # 7. 自動用 qpdf 解密（密碼就是乘車日 YYYYMMDD，我們已知）
+    pwd = date_dashed.replace("-", "")
+    if shutil.which("qpdf"):
+        tmp_decrypted = save_path.with_name(save_path.stem + ".decrypted.pdf")
+        try:
+            subprocess.run(
+                ["qpdf", "--decrypt", f"--password={pwd}",
+                 str(save_path), str(tmp_decrypted)],
+                check=True, capture_output=True
+            )
+            tmp_decrypted.replace(save_path)
+            print(f"🔓 已自動解密（原密碼 {pwd}），檔案可直接打開")
+        except subprocess.CalledProcessError as e:
+            stderr = e.stderr.decode() if e.stderr else ""
+            print(f"⚠️ 自動解密失敗：{stderr}")
+            print(f"🔑 PDF 密碼：{pwd} — 開啟時手動輸入即可")
+    else:
+        print(f"💡 安裝 qpdf 可自動解密：brew install qpdf")
+        print(f"🔑 PDF 密碼：{pwd}")
+
+    return save_path
 
 
 def main():
     parser = argparse.ArgumentParser(description="台灣高鐵電子車票證明下載（T Express 流程）")
-    parser.add_argument("--pnr", help="訂位代號（8 碼數字）")
+    parser.add_argument("--pnr", help="訂位代號（8 碼數字，自由座可省略）")
     parser.add_argument("--tid", help="車票號碼（13 碼數字，多張票任選一張）")
     parser.add_argument("--date", help="搭乘日期 YYYY-MM-DD")
     parser.add_argument("--from", dest="from_st", default="", help="起站（中文，僅用於檔名）")
@@ -268,12 +275,15 @@ def main():
             print(f"   • {label}  [統編 {c['tax_id']}]  {c['name']}")
         return
 
-    # 一般下載流程：pnr / tid / date 必填
-    missing = [name for name, val in (("--pnr", args.pnr), ("--tid", args.tid), ("--date", args.date)) if not val]
+    # 一般下載流程：tid / date 必填，pnr 對號座必填、自由座可省
+    required = [("--tid", args.tid), ("--date", args.date)]
+    if args.seat_type == "reserved":
+        required.append(("--pnr", args.pnr))
+    missing = [name for name, val in required if not val]
     if missing:
         parser.error(f"缺少必要參數：{', '.join(missing)}（用 --list 看可用公司）")
 
-    if not re.fullmatch(r"\d{8}", args.pnr):
+    if args.pnr and not re.fullmatch(r"\d{8}", args.pnr):
         print(f"⚠️ 訂位代號預期 8 碼數字，收到 {args.pnr!r}（仍嘗試）")
     if not re.fullmatch(r"\d{13}", args.tid):
         print(f"⚠️ 車票號碼預期 13 碼數字，收到 {args.tid!r}（仍嘗試）")
@@ -327,9 +337,7 @@ def main():
             print(f"   THSR_HEADED=1 python3 {sys.argv[0]} --pnr {args.pnr} --tid {args.tid} --date {args.date}")
         sys.exit(1)
 
-    pwd = args.date.replace("-", "")
     print(f"\n✅ 已儲存：{path}")
-    print(f"🔑 PDF 密碼：{pwd}（高鐵規定 = 乘車日 YYYYMMDD）")
     try:
         subprocess.run(["open", "-R", str(path)], check=False)
     except Exception:
