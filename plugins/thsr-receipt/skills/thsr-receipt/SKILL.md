@@ -73,11 +73,13 @@ URL 格式 `https://twincn.com/item.aspx?no=XXXXXXXX`，從 `?no=` 抓 8 碼，�
 mkdir -p ~/.config/thsr-receipt
 cat > ~/.config/thsr-receipt/companies.json <<'EOF'
 [
-  {"label": "簡稱", "tax_id": "12345678", "name": "全名股份有限公司"}
+  {"label": "<使用者給的簡稱>", "tax_id": "<8碼統編>", "name": "<公司全名>"}
 ]
 EOF
 chmod 600 ~/.config/thsr-receipt/companies.json
 ```
+
+⚠️ 用使用者**自己的**公司資料，不要照抄這份手冊裡的範例（台積電 / 鴻海 / 好好谷倉等都只是 placeholder）。
 
 驗證：
 ```bash

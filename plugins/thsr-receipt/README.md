@@ -114,7 +114,7 @@ python3 ~/.claude/skills/thsr-receipt/scripts/download.py \
 
 ## 多公司清單系統
 
-`~/.config/thsr-receipt/companies.json`（**永遠不上 git**）：
+`~/.config/thsr-receipt/companies.json`（**永遠不上 git，存在你 Mac 上 chmod 600**）：
 
 ```json
 [
@@ -122,6 +122,8 @@ python3 ~/.claude/skills/thsr-receipt/scripts/download.py \
   {"label": "鴻海", "tax_id": "04541302", "name": "鴻海精密工業股份有限公司"}
 ]
 ```
+
+> ⚠️ 上面台積電 / 鴻海是**公開公司範例**（這份 repo 用它們示範格式，你不用真的開單給他們）。**請替換成你自己常請款的公司**。 不知道某家統編？告訴 Claude 那家公司名 + 「幫我加進公司清單」，它會用經濟部 GCIS API 反查。
 
 之後 `--company-label "台積電"` 即可。每次 Claude 觸發 skill 都會主動列清單問你「這次請款給哪家」，不會假設用同一家。
 
