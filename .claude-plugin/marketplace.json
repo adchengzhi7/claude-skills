@@ -1,0 +1,20 @@
+{
+  "name": "adchengzhi7-claude-skills",
+  "displayName": "Alex's Claude Skills",
+  "description": "Alex Dee 的 Claude Code Skill / Plugin 集合，給日常與顧問業務用的自動化工具。",
+  "owner": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com",
+    "url": "https://github.com/adchengzhi7"
+  },
+  "plugins": [
+    {
+      "name": "tra-receipt",
+      "source": "./plugins/tra-receipt",
+      "description": "自動下載台鐵購票證明 PDF 用於報帳（macOS）",
+      "version": "1.0.0",
+      "category": "automation",
+      "keywords": ["taiwan-railway", "tra", "receipt", "expense", "automation", "macos"]
+    }
+  ]
+}

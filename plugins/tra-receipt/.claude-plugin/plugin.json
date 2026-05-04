@@ -1,0 +1,14 @@
+{
+  "name": "tra-receipt",
+  "version": "1.0.0",
+  "description": "自動下載台鐵購票證明 PDF 用於報帳（macOS）。支援身分證 / 居留證統一證號，PDF 自動命名為「乘車日-起站-訖站-票號.pdf」。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/agoodbarn/tra-receipt",
+  "repository": "https://github.com/agoodbarn/tra-receipt",
+  "license": "MIT",
+  "keywords": ["taiwan-railway", "tra", "receipt", "expense", "automation", "playwright", "macos"],
+  "platform": ["darwin"]
+}

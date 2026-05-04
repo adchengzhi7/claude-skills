@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Editor
+.vscode/
+.idea/
+
+# Output (in case someone runs from repo)
+Downloads/
+tra_receipts/
+*.pdf
+
+# Debug artifacts
+/tmp/tra-debug/
+debug-*.png
+debug-*.html
