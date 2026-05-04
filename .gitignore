@@ -19,5 +19,13 @@ tra_receipts/
 
 # Debug artifacts
 /tmp/tra-debug/
+/tmp/thsr-debug/
 debug-*.png
 debug-*.html
+
+# 個人公司清單 — 絕對不上 git（敏感資料）
+# 即使這個檔案不應該出現在 repo 內（它在 ~/.config/），但雙重保險
+companies.json
+**/companies.json
+!**/companies.example.json
+thsr_receipts/

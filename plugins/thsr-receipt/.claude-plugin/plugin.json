@@ -1,0 +1,14 @@
+{
+  "name": "thsr-receipt",
+  "version": "0.1.0",
+  "description": "自動下載台灣高鐵購票證明 PDF 用於報帳（macOS）。支援磁票 / QR Code 紙票。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/thsr-receipt",
+  "repository": "https://github.com/adchengzhi7/claude-skills",
+  "license": "MIT",
+  "keywords": ["taiwan-hsr", "thsr", "high-speed-rail", "receipt", "expense", "automation", "macos"],
+  "platform": ["darwin"]
+}

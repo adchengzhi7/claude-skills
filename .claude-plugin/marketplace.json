@@ -15,6 +15,14 @@
       "version": "1.0.0",
       "category": "automation",
       "keywords": ["taiwan-railway", "tra", "receipt", "expense", "automation", "macos"]
+    },
+    {
+      "name": "thsr-receipt",
+      "source": "./plugins/thsr-receipt",
+      "description": "自動下載台灣高鐵購票證明 PDF 用於報帳（macOS，磁票 / QR 紙票）",
+      "version": "0.1.0",
+      "category": "automation",
+      "keywords": ["taiwan-hsr", "thsr", "high-speed-rail", "receipt", "expense", "automation", "macos"]
     }
   ]
 }
