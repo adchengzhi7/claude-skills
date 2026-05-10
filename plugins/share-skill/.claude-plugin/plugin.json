@@ -1,0 +1,14 @@
+{
+  "name": "share-skill",
+  "version": "1.0.0",
+  "description": "在 commit / 公開 ~/.claude/ 內 skill 之前，自動掃 PII 洩漏（email / 統編 / 車牌 / 發票號等）。含 pre-commit hook 整合。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/share-skill",
+  "repository": "https://github.com/adchengzhi7/claude-skills",
+  "license": "MIT",
+  "keywords": ["security", "pii", "audit", "git-hook", "claude-code"],
+  "platform": ["darwin"]
+}

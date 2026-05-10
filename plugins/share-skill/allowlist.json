@@ -1,0 +1,82 @@
+{
+  "_說明": "命中以下字串時降為 INFO（不 BLOCK 也不 WARN）。intentional 揭露才加。",
+  "公司名": [
+    "豆樂逗樂"
+  ],
+  "_為什麼_豆樂逗樂": "quotation-builder skill 為豆樂逗樂量身打造，description 與 template 都明確提及該公司，是 intentional disclosure。",
+
+  "作者 email（plugin manifest 用）": [
+    "alex@agoodbarn.com"
+  ],
+  "_為什麼_作者email": "公開 plugin 的 author 欄位本來就應該是真實聯絡 email — 別人才能找你回報問題。",
+
+  "公開服務信箱": [
+    "payments-noreply@google.com",
+    "noreply@google.com",
+    "noreply@github.com",
+    "noreply@vercel.com",
+    "noreply@netlify.com",
+    "noreply@stripe.com",
+    "noreply@uber.com",
+    "billing@github.com",
+    "invoice+statements@vercel.com",
+    "invoice+statements@supabase.com",
+    "invoice+statements@mail.anthropic.com",
+    "invoice+statements@stripe.com",
+    "invoice+statements@supabase.io",
+    "ant.wilson@supabase.com",
+    "billing-support@supabase.com",
+    "googlepay-noreply@google.com",
+    "googleplay-noreply@google.com",
+    "googleads-noreply@google.com"
+  ],
+  "_為什麼_公開信箱": "這些是各大平台的公開服務信箱，不是個人 PII，需 allowlist 避免誤判為 email leak。",
+
+  "公開 API endpoints / IDs": [
+    "5F64D864-61CB-4D0D-8AD9-492047CC1EA6"
+  ],
+  "_為什麼_API_id": "GCIS 公開 API 的 dataset UUID，可直接 google 查到，不是私密資料。",
+
+  "字串placeholder": [
+    "12345678",
+    "ABC1234",
+    "ABC-1234",
+    "1234-ABC",
+    "1234-AB",
+    "AB-1234",
+    "NA000001",
+    "NA000000",
+    "00000000-0000-0000-0000-000000000000",
+    "XXXXXX-NNNNN",
+    "ABCDEF-00010",
+    "ZE00000000",
+    "F2C44271-0000",
+    "2632-0000",
+    "••••0000",
+    "your@email.com",
+    "you@example.com",
+    "personal@example.com",
+    "dev@example.com",
+    "someone@gmail.com",
+    "YOUR_EMAIL@gmail.com",
+    "/Users/xxx/",
+    "$HOME/",
+    "~/",
+    "392KB",
+    "393KB",
+    "377KB",
+    "89KB",
+    "1.8KB",
+    "2632-1605",
+    "2711-7276",
+    "2444-8479",
+    "2997-3576",
+    "2394-4884",
+    "F2C44271-0001",
+    "F2C44271-0002",
+    "F2C44271-0003",
+    "F2C44271-0004",
+    "F2C44271-0005"
+  ],
+  "_為什麼_placeholders": "明顯範例值（含 README 內舉例的舊 invoice 號）— 不是新洩漏，已是 doc 一部分。"
+}

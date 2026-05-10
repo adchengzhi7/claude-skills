@@ -1,0 +1,14 @@
+{
+  "name": "cloud-receipts",
+  "version": "1.0.0",
+  "description": "從 Gmail 自動抓 SaaS 訂閱發票（Vercel / Supabase / Anthropic / Netlify 等 Stripe 標準收據），按月份歸檔（macOS）。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/cloud-receipts",
+  "repository": "https://github.com/adchengzhi7/claude-skills",
+  "license": "MIT",
+  "keywords": ["saas", "stripe", "invoice", "vercel", "supabase", "anthropic", "expense", "automation", "macos"],
+  "platform": ["darwin"]
+}
