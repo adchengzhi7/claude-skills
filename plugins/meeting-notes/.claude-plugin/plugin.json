@@ -1,0 +1,13 @@
+{
+  "name": "meeting-notes",
+  "version": "1.0.0",
+  "description": "把語音自動轉的會議逐字稿整理成結構化會議記錄 — 會議摘要、決議事項、待辦清單（含負責人 / 期限）、待釐清。純 prompt 能力，無需安裝相依套件，跨平台。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/meeting-notes",
+  "repository": "https://github.com/adchengzhi7/claude-skills",
+  "license": "MIT",
+  "keywords": ["meeting", "notes", "transcript", "summary", "action-items", "productivity"]
+}

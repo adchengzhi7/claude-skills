@@ -30,9 +30,10 @@
 /plugin marketplace add adchengzhi7/claude-skills
 /plugin install tra-receipt
 /plugin install thsr-receipt
+/plugin install meeting-notes
 ```
 
-> 三行指令，分別是：（1）告訴你的 Claude 哪裡找 plugin，（2-3）裝兩個 plugin。
+> 第一行告訴你的 Claude 哪裡找 plugin，其餘各裝一個 plugin。
 
 之後我有新的 skill，你只要 `/plugin install <new-name>` 就好，**不用再 add marketplace**。
 
@@ -87,9 +88,10 @@ Claude 會：
 |---|---|---|
 | **[tra-receipt](./plugins/tra-receipt/)** v1.1 | 自動下載台鐵購票證明 PDF（支援身分證 / 居留證統一證號）| macOS |
 | **[thsr-receipt](./plugins/thsr-receipt/)** v1.2 | 自動下載台灣高鐵購票證明 / 交易紀錄 PDF（T Express + 磁票/紙票，含統編戳章）| macOS |
+| **[meeting-notes](./plugins/meeting-notes/)** v1.0 | 把語音自動轉的會議逐字稿整理成結構化會議記錄（摘要 / 決議 / 待辦 / 待釐清）| 跨平台 |
 | _（更多會陸續上架）_ | | |
 
-兩個 plugin 都做月份分檔（`~/Downloads/.../2026-04/...`）方便月報帳整批拉。
+兩個收據 plugin 都做月份分檔（`~/Downloads/.../2026-04/...`）方便月報帳整批拉；meeting-notes 是純 prompt 能力、免裝相依套件。
 
 ---
 

@@ -23,6 +23,14 @@
       "version": "1.2.0",
       "category": "automation",
       "keywords": ["taiwan-hsr", "thsr", "high-speed-rail", "receipt", "expense", "automation", "macos"]
+    },
+    {
+      "name": "meeting-notes",
+      "source": "./plugins/meeting-notes",
+      "description": "把語音自動轉的會議逐字稿整理成結構化會議記錄 — 摘要 / 決議 / 待辦（含負責人・期限）/ 待釐清",
+      "version": "1.0.0",
+      "category": "productivity",
+      "keywords": ["meeting", "notes", "transcript", "summary", "action-items", "productivity"]
     }
   ]
 }
