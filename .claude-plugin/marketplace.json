@@ -122,7 +122,7 @@
       "name": "clear-handoff",
       "source": "./plugins/clear-handoff",
       "description": "在 /clear 前把工作狀態打包成可無縫續做的交接包——session note + 可直接貼回的 resume prompts",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "category": "productivity",
       "keywords": [
         "handoff",
