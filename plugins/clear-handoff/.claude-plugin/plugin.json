@@ -1,6 +1,6 @@
 {
   "name": "clear-handoff",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "在 /clear 前把當前工作狀態打包成可無縫續做的交接包——session note + 可直接貼回的 resume prompts。抓未完成工作、立即下一步、檔案位置、環境雷、背景程序。",
   "author": {
     "name": "Alex Dee",
