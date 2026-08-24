@@ -1,6 +1,6 @@
 ---
 name: tra-receipt
-description: 自動下載台鐵購票證明 PDF 用於報帳。當使用者說「下載台鐵購票證明」、「台鐵報帳」、「幫我抓台鐵車票」、提供 7-8 位數的台鐵訂票代碼、或貼出台鐵 e訂通「訂票紀錄詳情」截圖時觸發。也適用於使用者只丟訂票代碼數字（如「3333333」）但上下文是出差/報帳的情境。
+description: 自動下載台鐵購票證明 PDF 用於報帳。當使用者說「下載台鐵購票證明」、「台鐵報帳」、「幫我抓台鐵車票」、提供 7-8 位數的台鐵訂票代碼、或貼出台鐵 e訂通「訂票紀錄詳情」截圖時觸發。也適用於使用者只丟訂票代碼數字（如「7397279」）但上下文是出差/報帳的情境。
 ---
 
 # 台鐵購票證明自動下載 — Claude 操作手冊
@@ -17,7 +17,7 @@ description: 自動下載台鐵購票證明 PDF 用於報帳。當使用者說�
 - 使用者說「下載台鐵購票證明」、「台鐵報帳」、「報帳要的台鐵車票」
 
 模糊訊號（看上下文判斷）：
-- 使用者只丟一串 7-8 位數字（例：`3333333`），且對話脈絡是出差 / 報帳
+- 使用者只丟一串 7-8 位數字（例：`7397279`），且對話脈絡是出差 / 報帳
 - 使用者貼一張看起來像火車票的照片或截圖
 
 ---
@@ -56,7 +56,7 @@ e訂通「訂票紀錄詳情」畫面 → 找橘色按鈕「**訂票代碼 XXXXX
 
 ```bash
 sips -s format jpeg -s formatOptions 70 --resampleWidth 800 \
-  "/Users/alexd/Downloads/IMG_XXXX.HEIC" --out "/tmp/IMG_XXXX.jpg"
+  "~/Downloads/IMG_XXXX.HEIC" --out "/tmp/IMG_XXXX.jpg"
 ```
 
 再 Read JPG。
@@ -66,7 +66,7 @@ sips -s format jpeg -s formatOptions 70 --resampleWidth 800 \
 ## Phase 2：執行下載
 
 ```bash
-python3 ~/.claude/skills/tra-receipt/scripts/download.py 3333333
+python3 ~/.claude/skills/tra-receipt/scripts/download.py 7397279
 ```
 
 腳本會：

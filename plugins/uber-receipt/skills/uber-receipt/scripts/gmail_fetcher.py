@@ -35,6 +35,9 @@ from pathlib import Path
 from typing import Iterator
 
 KEYCHAIN_SERVICE = "uber-receipt-gmail"
+# 共用 fallback：cloud-receipts / google-bills 用這個 service 存同一批 Gmail App Password。
+# uber 帳號若沒單獨存 uber-receipt-gmail，就沿用共用的，達成「一份設定、全引擎共用」。
+FALLBACK_KEYCHAIN_SERVICE = "cloud-receipts-gmail"
 GMAIL_CONFIG = Path.home() / ".config" / "receipts" / "gmail.json"
 PROCESSED_LOG = Path.home() / ".config" / "receipts" / "uber-processed.json"
 IMAP_HOST = "imap.gmail.com"
@@ -54,16 +57,48 @@ HTTP_HEADERS = {
 # ---------- 認證 ----------
 
 def _read_keychain(account: str) -> str | None:
-    try:
-        r = subprocess.run(
-            ["security", "find-generic-password", "-a", account, "-s", KEYCHAIN_SERVICE, "-w"],
-            capture_output=True, text=True, check=True,
-        )
-        return r.stdout.strip() or None
-    except subprocess.CalledProcessError:
-        return None
-    except FileNotFoundError:
-        return None
+    """先找 uber 專屬 service，沒有就 fallback 到 cloud-receipts 共用 service。"""
+    for service in (KEYCHAIN_SERVICE, FALLBACK_KEYCHAIN_SERVICE):
+        try:
+            r = subprocess.run(
+                ["security", "find-generic-password", "-a", account, "-s", service, "-w"],
+                capture_output=True, text=True, check=True,
+            )
+            pw = r.stdout.strip()
+            if pw:
+                return pw
+        except subprocess.CalledProcessError:
+            continue
+        except FileNotFoundError:
+            return None
+    return None
+
+
+def _iter_config_emails(cfg: dict) -> list[str]:
+    """同時支援新舊兩種 gmail.json 格式：
+    舊：{"email": "a@b.com"}
+    新：{"accounts": [{"email": "a@b.com", "label": "..."}, ...]}（cloud-receipts 共用格式）
+    """
+    emails: list[str] = []
+    single = cfg.get("email")
+    if single:
+        emails.append(single)
+    for acc in cfg.get("accounts", []) or []:
+        addr = acc.get("email") if isinstance(acc, dict) else None
+        if addr and addr not in emails:
+            emails.append(addr)
+    return emails
+
+
+def get_all_credentials() -> list[tuple[str, str]]:
+    """回傳所有「有 App Password」的 (email, app_password)。多帳號全抓。"""
+    cfg = _load_gmail_config()
+    creds: list[tuple[str, str]] = []
+    for addr in _iter_config_emails(cfg):
+        pw = _read_keychain(addr)
+        if pw:
+            creds.append((addr, pw))
+    return creds
 
 
 def _load_gmail_config() -> dict:
@@ -85,15 +120,9 @@ def save_gmail_email(addr: str) -> None:
 
 
 def get_credentials() -> tuple[str, str] | None:
-    """回傳 (email, app_password) 或 None（未設定）。"""
-    cfg = _load_gmail_config()
-    addr = cfg.get("email")
-    if not addr:
-        return None
-    pw = _read_keychain(addr)
-    if not pw:
-        return None
-    return addr, pw
+    """回傳第一組可用的 (email, app_password) 或 None（未設定）。向後相容單帳號呼叫者。"""
+    creds = get_all_credentials()
+    return creds[0] if creds else None
 
 
 def setup_instructions() -> str:
@@ -295,10 +324,9 @@ def fetch_trips(
     sys.path.insert(0, str(Path(__file__).parent))
     from email_parser import parse_email, save_eml, extract_receipt_tracker, _extract_html_from_msg  # noqa: E402
 
-    creds = get_credentials()
-    if not creds:
+    all_creds = get_all_credentials()
+    if not all_creds:
         raise RuntimeError(setup_instructions())
-    addr, pw = creds
 
     if target_dir is None:
         target_dir = Path("/tmp") / f"uber-fetch-{int(time.time())}"
@@ -307,44 +335,71 @@ def fetch_trips(
     processed = _load_processed() if skip_processed else set()
     results: list[dict] = []
 
+    for addr, pw in all_creds:
+        results.extend(
+            _fetch_trips_one_account(
+                addr=addr, pw=pw, since=since, target_dir=target_dir,
+                processed=processed, parse_email=parse_email, save_eml=save_eml,
+                extract_receipt_tracker=extract_receipt_tracker,
+                _extract_html_from_msg=_extract_html_from_msg,
+            )
+        )
+
+    return results
+
+
+def _fetch_trips_one_account(
+    *, addr, pw, since, target_dir, processed,
+    parse_email, save_eml, extract_receipt_tracker, _extract_html_from_msg,
+) -> list[dict]:
+    """單一帳號的 IMAP 抓取。dedup key 以 email 為命名空間，避免跨帳號 UID 撞號。"""
+    results: list[dict] = []
+
     M = imaplib.IMAP4_SSL(IMAP_HOST, IMAP_PORT)
     try:
         try:
             M.login(addr, pw)
         except imaplib.IMAP4.error as e:
-            raise RuntimeError(
-                f"❌ Gmail 登入失敗：{e}\n"
-                f"   請確認 {addr} 的 App Password 是否正確（macOS Keychain service '{KEYCHAIN_SERVICE}'）。"
-            )
+            # 多帳號時，單一帳號登入失敗不該炸掉整批 → 記為錯誤、繼續下一個
+            print(f"❌ [{addr}] Gmail 登入失敗：{e}（keychain '{KEYCHAIN_SERVICE}' / "
+                  f"'{FALLBACK_KEYCHAIN_SERVICE}'）", file=sys.stderr)
+            return results
 
         uids = _imap_search_uber(M, since)
-        print(f"📧 IMAP 找到 {len(uids)} 封 Uber 信件"
+        print(f"📧 [{addr}] IMAP 找到 {len(uids)} 封 Uber 信件"
               + (f"（since {since.date()}）" if since else ""))
 
         for uid in uids:
             uid_str = uid.decode()
-            if uid_str in processed:
-                results.append({"uid": uid_str, "status": "skipped_processed", "source_path": None})
+            key = f"{addr}:{uid_str}"
+            # 舊版 processed log 存的是裸 uid（單帳號時代）→ 兩者都算已處理
+            if key in processed or uid_str in processed:
+                results.append({"uid": uid_str, "account": addr,
+                                "status": "skipped_processed", "source_path": None})
                 continue
 
             msg = _fetch_message(M, uid)
             if not msg:
-                results.append({"uid": uid_str, "status": "parse_failed", "source_path": None})
+                results.append({"uid": uid_str, "account": addr,
+                                "status": "parse_failed", "source_path": None})
                 continue
 
             # 暫存 .eml 到 target_dir
-            eml_path = target_dir / f"uber-{uid_str}.eml"
+            eml_path = target_dir / f"uber-{addr}-{uid_str}.eml"
             save_eml(msg, eml_path)
 
             try:
                 trip = parse_email(msg, eml_source_path=str(eml_path))
             except Exception as e:
-                results.append({"uid": uid_str, "status": "parse_failed",
+                results.append({"uid": uid_str, "account": addr, "status": "parse_failed",
                                 "source_path": str(eml_path), "error": str(e)})
-                _append_processed(uid_str, str(eml_path))
+                _append_processed(key, str(eml_path))
                 continue
 
             if trip.get("is_eats"):
+                # 不記入 processed（之後修正判定邏輯時還能重抓），但要留下痕跡：
+                # 靜默丟棄曾讓誤判成外送的商務行程整批消失且無人察覺。
+                print(f"   ⏭ [{addr}] uid={uid_str} 判定為 Uber Eats 外送，略過")
                 continue
 
             # 順手抽 click-tracker URL 給 uber_browser 後續用
@@ -355,9 +410,10 @@ def fetch_trips(
                 trip["_tracker_url"] = None
 
             trip["uid"] = uid_str
+            trip["account"] = addr
             trip["status"] = "parsed"
             results.append(trip)
-            _append_processed(uid_str, str(eml_path))
+            _append_processed(key, str(eml_path))
 
     finally:
         try:

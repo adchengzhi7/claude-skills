@@ -196,7 +196,7 @@ def extract_metadata_from_pdf(pdf_path: Path) -> dict:
         return {}
 
     meta = {}
-    # 票號: 1 英文 + 數字（如 NXXXXXXXXXXXX1），位於「票號」字樣後
+    # 票號: 1 英文 + 數字（如 N60149229164197），位於「票號」字樣後
     if m := re.search(r"票號\s+([A-Z]\d{8,})", text):
         meta["ticket_no"] = m.group(1)
     # 乘車日格式: 2026/04/27

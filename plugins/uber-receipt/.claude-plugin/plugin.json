@@ -1,6 +1,6 @@
 {
   "name": "uber-receipt",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "整理 Uber 行程 PDF + 統一發票，從 Gmail 自動抓 → Uber session 下載官方 PDF → XML 反查公司歸戶 → 月份歸檔（macOS）。",
   "author": {
     "name": "Alex Dee",
@@ -9,6 +9,16 @@
   "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/uber-receipt",
   "repository": "https://github.com/adchengzhi7/claude-skills",
   "license": "MIT",
-  "keywords": ["uber", "taxi", "receipt", "expense", "playwright", "gmail", "macos"],
-  "platform": ["darwin"]
+  "keywords": [
+    "uber",
+    "taxi",
+    "receipt",
+    "expense",
+    "playwright",
+    "gmail",
+    "macos"
+  ],
+  "platform": [
+    "darwin"
+  ]
 }

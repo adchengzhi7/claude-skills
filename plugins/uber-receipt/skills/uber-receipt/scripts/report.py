@@ -31,8 +31,20 @@ def _company_lookup() -> dict[str, dict]:
 
 def _company_from_filename(name: str) -> str | None:
     import re
-    m = re.search(r"-\[([^\]]+)\]\.pdf$", name)
+    m = re.search(r"-\[([^\]]+)\]\.(?:pdf|eml)$", name)
     return m.group(1) if m else None
+
+
+def _parse_any(path: Path) -> dict:
+    """依副檔名選 parser：.pdf → parse_pdf；.eml → email_parser.parse_email。"""
+    if path.suffix.lower() == ".eml":
+        import email
+        import email.policy
+        from email_parser import parse_email  # noqa: E402
+        with path.open("rb") as f:
+            msg = email.message_from_binary_file(f, policy=email.policy.default)
+        return parse_email(msg, eml_source_path=str(path))
+    return parse_pdf(path)
 
 
 def _gather(month: str) -> list[dict]:
@@ -41,14 +53,23 @@ def _gather(month: str) -> list[dict]:
         return []
 
     rows = []
-    for pdf in sorted(month_dir.glob("*.pdf")):
-        company = _company_from_filename(pdf.name)
+    # 遞迴掃：歸檔是 YYYY-MM/YYYY-MM-DD/ 月日階層（見 organize.compute_target_dir）。
+    # 同時支援 PDF（手動 / 官方下載）與 .eml（from-gmail 流程）。
+    seen: set[str] = set()
+    for f in sorted(list(month_dir.rglob("*.pdf")) + list(month_dir.rglob("*.eml"))):
+        # 同一趟可能同時有 PDF + .eml，PDF 優先；用「同目錄同 prefix」去重
+        stem_key = str(f.parent / f.stem)
+        if f.suffix.lower() == ".eml" and (stem_key + "|pdf") in seen:
+            continue
+        if f.suffix.lower() == ".pdf":
+            seen.add(stem_key + "|pdf")
+        company = _company_from_filename(f.name)
         if company == "私人":
             continue
         try:
-            trip = parse_pdf(pdf)
+            trip = _parse_any(f)
         except Exception as e:
-            print(f"⚠️ 解析失敗 {pdf.name}: {e}", file=sys.stderr)
+            print(f"⚠️ 解析失敗 {f.name}: {e}", file=sys.stderr)
             continue
         trip["_company"] = company
         rows.append(trip)

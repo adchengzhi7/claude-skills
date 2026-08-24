@@ -211,7 +211,11 @@ def _parse_payment(text: str) -> str | None:
 
 
 def _is_eats(text: str) -> bool:
-    return any(kw in text for kw in ["Uber Eats", "餐廳合作", "外送費", "外送員"])
+    # 不能只看有沒有「Uber Eats」字樣：Uber 會在「行程」收據信裡夾帶 Uber Eats
+    # 廣告（例：「在 Uber Eats 享受比賽日優惠／訂購漢堡、披薩」），用它當關鍵字
+    # 會把正常的商務行程誤判成外送而丟掉。改用只有外送訂單才會出現的特徵。
+    return any(kw in text for kw in
+               ["送出的訂單", "訂單編號", "您的訂單", "餐廳合作", "外送費", "外送員"])
 
 
 def _is_refunded(text: str) -> bool:

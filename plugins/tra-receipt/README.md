@@ -7,7 +7,7 @@
 在 Claude Code 裡丟一句**「下載 3333333 的台鐵購票證明」**，或**直接拖一張 e訂通「訂票紀錄詳情」截圖**，PDF 就自動落地：
 
 ```
-~/Downloads/tra_receipts/2026-04-27-池上-南港-NXXXXXXXXXXXX1.pdf
+~/Downloads/tra_receipts/2026-04-27-台中-南港-NXXXXXXXXXXXX1.pdf
                          └─乘車日─┘ └起站┘└訖站┘ └─────票號─────┘
 ```
 

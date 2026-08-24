@@ -12,25 +12,48 @@
       "name": "tra-receipt",
       "source": "./plugins/tra-receipt",
       "description": "自動下載台鐵購票證明 PDF 用於報帳（macOS）— 自動依月份歸檔",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "category": "automation",
-      "keywords": ["taiwan-railway", "tra", "receipt", "expense", "automation", "macos"]
+      "keywords": [
+        "taiwan-railway",
+        "tra",
+        "receipt",
+        "expense",
+        "automation",
+        "macos"
+      ]
     },
     {
       "name": "thsr-receipt",
       "source": "./plugins/thsr-receipt",
       "description": "自動下載台灣高鐵購票證明 / 交易紀錄 PDF 用於報帳（macOS）— T Express + 磁票/紙票，依月份歸檔",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "category": "automation",
-      "keywords": ["taiwan-hsr", "thsr", "high-speed-rail", "receipt", "expense", "automation", "macos"]
+      "keywords": [
+        "taiwan-hsr",
+        "thsr",
+        "high-speed-rail",
+        "receipt",
+        "expense",
+        "automation",
+        "macos"
+      ]
     },
     {
       "name": "uber-receipt",
       "source": "./plugins/uber-receipt",
       "description": "整理 Uber 行程 PDF + 統一發票 — Gmail 自動抓、官方 PDF 下載、XML 反查歸戶、月份歸檔（macOS）",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "automation",
-      "keywords": ["uber", "taxi", "receipt", "expense", "playwright", "gmail", "macos"]
+      "keywords": [
+        "uber",
+        "taxi",
+        "receipt",
+        "expense",
+        "playwright",
+        "gmail",
+        "macos"
+      ]
     },
     {
       "name": "cloud-receipts",
@@ -38,7 +61,17 @@
       "description": "從 Gmail 自動抓 SaaS 訂閱發票（Vercel / Supabase / Anthropic / Netlify 等），按月份歸檔（macOS）",
       "version": "1.0.0",
       "category": "automation",
-      "keywords": ["saas", "stripe", "invoice", "vercel", "supabase", "anthropic", "expense", "automation", "macos"]
+      "keywords": [
+        "saas",
+        "stripe",
+        "invoice",
+        "vercel",
+        "supabase",
+        "anthropic",
+        "expense",
+        "automation",
+        "macos"
+      ]
     },
     {
       "name": "google-bills",
@@ -46,7 +79,15 @@
       "description": "從 Gmail 抓 Google Payments 帳單 PDF（Workspace + GCP），依類型自動分流月份資料夾（macOS）",
       "version": "1.0.0",
       "category": "automation",
-      "keywords": ["google-workspace", "gcp", "billing", "invoice", "expense", "automation", "macos"]
+      "keywords": [
+        "google-workspace",
+        "gcp",
+        "billing",
+        "invoice",
+        "expense",
+        "automation",
+        "macos"
+      ]
     },
     {
       "name": "share-skill",
@@ -54,7 +95,13 @@
       "description": "公開 skill 前自動掃 PII 洩漏（email / 統編 / 車牌 / 發票號等），含 pre-commit hook（macOS）",
       "version": "1.0.0",
       "category": "developer-tools",
-      "keywords": ["security", "pii", "audit", "git-hook", "claude-code"]
+      "keywords": [
+        "security",
+        "pii",
+        "audit",
+        "git-hook",
+        "claude-code"
+      ]
     },
     {
       "name": "meeting-notes",
@@ -62,7 +109,29 @@
       "description": "把語音自動轉的會議逐字稿整理成結構化會議記錄 — 摘要 / 決議 / 待辦（含負責人・期限）/ 待釐清",
       "version": "1.0.0",
       "category": "productivity",
-      "keywords": ["meeting", "notes", "transcript", "summary", "action-items", "productivity"]
+      "keywords": [
+        "meeting",
+        "notes",
+        "transcript",
+        "summary",
+        "action-items",
+        "productivity"
+      ]
+    },
+    {
+      "name": "clear-handoff",
+      "source": "./plugins/clear-handoff",
+      "description": "在 /clear 前把工作狀態打包成可無縫續做的交接包——session note + 可直接貼回的 resume prompts",
+      "version": "1.0.0",
+      "category": "productivity",
+      "keywords": [
+        "handoff",
+        "context",
+        "session-notes",
+        "resume",
+        "productivity",
+        "claude-code"
+      ]
     }
   ]
 }

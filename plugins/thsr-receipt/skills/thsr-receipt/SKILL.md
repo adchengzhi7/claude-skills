@@ -55,12 +55,12 @@ python3 -c "import playwright" 2>&1 | grep -q ModuleNotFoundError && \
 用經濟部 GCIS 公開 API 反查公司全名：
 
 ```bash
-curl -sL "https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6?\$format=json&\$filter=Business_Accounting_NO%20eq%2004541302&\$top=5"
+curl -sL "https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6?\$format=json&\$filter=Business_Accounting_NO%20eq%2012345678&\$top=5"
 ```
 
 回應：
 ```json
-[{"Business_Accounting_NO": "04541302", "Company_Name": "鴻海精密工業股份有限公司", ...}]
+[{"Business_Accounting_NO": "12345678", "Company_Name": "範例股份有限公司", ...}]
 ```
 
 ### 如果使用者貼 twincn URL
@@ -73,13 +73,11 @@ URL 格式 `https://twincn.com/item.aspx?no=XXXXXXXX`，從 `?no=` 抓 8 碼，�
 mkdir -p ~/.config/thsr-receipt
 cat > ~/.config/thsr-receipt/companies.json <<'EOF'
 [
-  {"label": "<使用者給的簡稱>", "tax_id": "<8碼統編>", "name": "<公司全名>"}
+  {"label": "簡稱", "tax_id": "12345678", "name": "全名股份有限公司"}
 ]
 EOF
 chmod 600 ~/.config/thsr-receipt/companies.json
 ```
-
-⚠️ 用使用者**自己的**公司資料，不要照抄這份手冊裡的範例（台積電 / 鴻海 / 好好谷倉等都只是 placeholder）。
 
 驗證：
 ```bash
@@ -94,14 +92,14 @@ python3 ~/.claude/skills/thsr-receipt/scripts/download.py --list
 
 ```bash
 sips -s format jpeg -s formatOptions 70 --resampleWidth 800 \
-  "/Users/alexd/Downloads/IMG_XXXX.HEIC" --out "/tmp/IMG_XXXX.jpg"
+  "~/Downloads/IMG_XXXX.HEIC" --out "/tmp/IMG_XXXX.jpg"
 ```
 
 ### T Express App 截圖讀取重點
 
 橘色 banner 「票證資訊」標題下：
 - **訂位代號**（橘色字、8 碼數字，例 `12345678`）
-- **車票號碼**（橘色字、13 碼數字，例 `1234567890125`）
+- **車票號碼**（橘色字、13 碼數字，例 `2900000000000`）
 - **乘車日期** + 時間（例 `2026/04/29` `07:00`）
 - **起站 → 訖站**（例「南港 → 台中」）
 - 行程類型：單程票 / 去回票
@@ -135,7 +133,7 @@ python3 ~/.claude/skills/thsr-receipt/scripts/download.py --list
 把清單列給使用者，問：「這次給哪家？」
 
 使用者可能回：
-- label（例「台積電」）→ `--company-label "台積電"`
+- label（例「範例公司A」）→ `--company-label "範例公司A"`
 - 一次性的統編 + 全名 → `--tax-id 12345678 --company "XX 股份有限公司"`
 - 「同上次」→ 找前面的對話脈絡，不要硬猜
 
@@ -146,27 +144,27 @@ python3 ~/.claude/skills/thsr-receipt/scripts/download.py --list
 ### T Express 對號座（最常見）
 ```bash
 python3 ~/.claude/skills/thsr-receipt/scripts/download.py \
-  --pnr 87654321 --tid 1234567890123 \
+  --pnr 12345678 --tid 2900000000000 \
   --date 2026-04-29 --from 南港 --to 台中 \
-  --company-label "台積電"
+  --company-label "範例公司A"
 ```
 
 ### T Express 自由座
 ```bash
 python3 ~/.claude/skills/thsr-receipt/scripts/download.py \
-  --tid 1234567890123 --date 2026-04-29 \
+  --tid 2900000000000 --date 2026-04-29 \
   --from 南港 --to 台中 \
   --seat-type free \
-  --company-label "台積電"
+  --company-label "範例公司A"
 ```
 
 ### 磁票 / QR Code 紙票
 ```bash
 python3 ~/.claude/skills/thsr-receipt/scripts/download.py \
   --ticket-type magnetic --seat-type free \
-  --tid 9999999999992 --date 2026-04-11 \
+  --tid 0710601010526 --date 2026-04-11 \
   --from 台中 --to 南港 \
-  --company-label "台積電"
+  --company-label "範例公司A"
 ```
 
 PDF 自動解密、依乘車日 YYYY-MM 分資料夾。
@@ -196,7 +194,7 @@ PDF 自動解密、依乘車日 YYYY-MM 分資料夾。
 
 **「我用錯統編下載了，能改嗎？」**
 - 同一 tid 不行（HSR 永久鎖定）。
-- 但若是去回票或分票，**回程 / 另一張票的 tid 還可下載** → 用那張補給另一家公司。範例：04/29 去程（tid 1234567890123）誤給台積電 → 回程 tid 1234567890124 還能給鴻海。
+- 但若是去回票或分票，**回程 / 另一張票的 tid 還可下載** → 用那張補給另一家公司。範例：04/29 去程（tid 2900000000000）誤給範例公司A → 回程 tid 2900000000001 還能給豆樂逗樂。
 
 **「磁票要報稅扣抵」**
 - 線上拿不到。請使用者去 HSR 車站窗口辦特殊憑證。
