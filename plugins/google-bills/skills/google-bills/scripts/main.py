@@ -19,7 +19,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 # 重用 cloud-receipts 的 base 模組
-sys.path.insert(0, str(Path.home() / ".claude" / "skills" / "cloud-receipts" / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # base/ 模組隨包附帶，不依賴安裝位置
 
 from base.gmail_fetcher import (  # noqa: E402
     iter_provider_emails,

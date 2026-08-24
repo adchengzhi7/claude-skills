@@ -5,6 +5,9 @@ description: 在公開 / 分享 ~/.claude/ 內任何 skill 之前，自動審查
 
 # share-skill — Claude 操作手冊
 
+> 路徑說明：`{SKILL_DIR}` ＝ 本 skill 的安裝目錄（skill 載入時系統會標示 base directory；手動裝在 `~/.claude/skills/` 的話就是那裡，plugin 安裝則在 plugin 快取目錄）。
+
+
 公開 / 分享 skill 給朋友前的審查工具。當使用者要 commit + push 任何 skill 到公開 repo 時跑這個。
 
 ## 何時觸發
@@ -18,10 +21,10 @@ description: 在公開 / 分享 ~/.claude/ 內任何 skill 之前，自動審查
 ## 工作流程
 
 ```bash
-python3 ~/.claude/skills/share-skill/scripts/audit.py <skill-path>
+python3 {SKILL_DIR}/scripts/audit.py <skill-path>
 
 # 例
-python3 ~/.claude/skills/share-skill/scripts/audit.py ~/.claude/skills/cloud-receipts/
+python3 {SKILL_DIR}/scripts/audit.py ~/.claude/skills/cloud-receipts/
 ```
 
 執行的檢查（依嚴重度）：
@@ -44,7 +47,7 @@ python3 ~/.claude/skills/share-skill/scripts/audit.py ~/.claude/skills/cloud-rec
 
 ## 容許清單（intentional disclosures）
 
-在 `~/.claude/skills/share-skill/allowlist.json` 內維護：
+在 `{SKILL_DIR}/allowlist.json` 內維護：
 
 ```json
 {

@@ -12,7 +12,7 @@
       "name": "tra-receipt",
       "source": "./plugins/tra-receipt",
       "description": "自動下載台鐵購票證明 PDF 用於報帳（macOS）— 自動依月份歸檔",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "category": "automation",
       "keywords": [
         "taiwan-railway",
@@ -27,7 +27,7 @@
       "name": "thsr-receipt",
       "source": "./plugins/thsr-receipt",
       "description": "自動下載台灣高鐵購票證明 / 交易紀錄 PDF 用於報帳（macOS）— T Express + 磁票/紙票，依月份歸檔",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "category": "automation",
       "keywords": [
         "taiwan-hsr",
@@ -43,7 +43,7 @@
       "name": "uber-receipt",
       "source": "./plugins/uber-receipt",
       "description": "整理 Uber 行程 PDF + 統一發票 — Gmail 自動抓、官方 PDF 下載、XML 反查歸戶、月份歸檔（macOS）",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "category": "automation",
       "keywords": [
         "uber",
@@ -59,7 +59,7 @@
       "name": "cloud-receipts",
       "source": "./plugins/cloud-receipts",
       "description": "從 Gmail 自動抓 SaaS 訂閱發票（Vercel / Supabase / Anthropic / Netlify 等），按月份歸檔（macOS）",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "automation",
       "keywords": [
         "saas",
@@ -77,7 +77,7 @@
       "name": "google-bills",
       "source": "./plugins/google-bills",
       "description": "從 Gmail 抓 Google Payments 帳單 PDF（Workspace + GCP），依類型自動分流月份資料夾（macOS）",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "automation",
       "keywords": [
         "google-workspace",
@@ -93,7 +93,7 @@
       "name": "share-skill",
       "source": "./plugins/share-skill",
       "description": "公開 skill 前自動掃 PII 洩漏（email / 統編 / 車牌 / 發票號等），含 pre-commit hook（macOS）",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "developer-tools",
       "keywords": [
         "security",

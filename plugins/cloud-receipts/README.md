@@ -1,5 +1,8 @@
 # cloud-receipts
 
+> 本文指令路徑以手動安裝於 `~/.claude/skills/` 為例；若用 plugin marketplace 安裝，路徑換成該 plugin 的安裝目錄（Claude 載入 skill 時會知道）。
+
+
 > Claude Code skill：從 Gmail 自動抓 SaaS 訂閱發票（Vercel / Supabase / Anthropic / Netlify）按月份歸檔。
 
 跟 `uber-receipt` 同個 repo、同個 macOS Keychain 設計，互不衝突。

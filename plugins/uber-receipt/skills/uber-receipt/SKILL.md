@@ -5,6 +5,9 @@ description: 整理 Uber 行程 PDF 收據用於報帳。當使用者說「整�
 
 # Uber 收據整理 — Claude 操作手冊
 
+> 路徑說明：`{SKILL_DIR}` ＝ 本 skill 的安裝目錄（skill 載入時系統會標示 base directory；手動裝在 `~/.claude/skills/` 的話就是那裡，plugin 安裝則在 plugin 快取目錄）。
+
+
 把 Uber 行程 PDF（從 email 下載或 riders.uber.com 下載）解析、智慧分配公司、歸檔到 `~/Downloads/uber_receipts/YYYY-MM/`，產月報。**這份檔案是寫給「執行這個 skill 的 Claude」看的**，不是寫給最終使用者。
 
 ---
@@ -33,11 +36,11 @@ description: 整理 Uber 行程 PDF 收據用於報帳。當使用者說「整�
 which python3 || echo "❌ 缺 python3 → brew install python"
 python3 -c "import pdfplumber" 2>&1 | grep -q ModuleNotFoundError && \
   echo "❌ 缺 pdfplumber → pip3 install --break-system-packages pdfplumber"
-python3 ~/.claude/skills/uber-receipt/scripts/companies.py
+python3 {SKILL_DIR}/scripts/companies.py
 # 沒公司清單 → 走 Phase 1
 
 # Gmail 自動抓功能（可選但強烈推薦，不裝 fallback 是手動拖 PDF）
-python3 ~/.claude/skills/uber-receipt/scripts/gmail_fetcher.py --check
+python3 {SKILL_DIR}/scripts/gmail_fetcher.py --check
 # ❌ → 走 Phase 1.5
 ```
 
@@ -59,7 +62,7 @@ python3 ~/.claude/skills/uber-receipt/scripts/gmail_fetcher.py --check
 # 設定 email
 python3 -c "
 import sys
-sys.path.insert(0, '$HOME/.claude/skills/uber-receipt/scripts')
+sys.path.insert(0, '{SKILL_DIR}/scripts')
 from gmail_fetcher import save_gmail_email
 save_gmail_email('YOUR_EMAIL@gmail.com')
 "
@@ -73,7 +76,7 @@ security add-generic-password \
 
 驗證：
 ```bash
-python3 ~/.claude/skills/uber-receipt/scripts/gmail_fetcher.py --check
+python3 {SKILL_DIR}/scripts/gmail_fetcher.py --check
 # ✅ Gmail 設定 OK：YOUR_EMAIL@gmail.com
 ```
 
@@ -87,7 +90,7 @@ python3 ~/.claude/skills/uber-receipt/scripts/gmail_fetcher.py --check
 設定好之後，使用者只要說「整理本月 Uber」，跑：
 
 ```bash
-python3 ~/.claude/skills/uber-receipt/scripts/main.py --from-gmail \
+python3 {SKILL_DIR}/scripts/main.py --from-gmail \
   --default-company 我的公司 \
   --json
 ```
@@ -113,7 +116,7 @@ curl -sL "https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-49204
 ```bash
 python3 -c "
 import sys, json
-sys.path.insert(0, '/Users/$USER/.claude/skills/uber-receipt/scripts')
+sys.path.insert(0, '{SKILL_DIR}/scripts')
 from companies import write_companies
 write_companies([
   {'label': '簡稱', 'tax_id': '12345678', 'name': '全名股份有限公司'},
@@ -154,7 +157,7 @@ write_companies([
 在 `--batch` 之前，先跟使用者確認**這批的預設公司**：
 
 ```bash
-python3 ~/.claude/skills/uber-receipt/scripts/main.py --list
+python3 {SKILL_DIR}/scripts/main.py --list
 ```
 
 問：「這批 Uber 主要報給哪家公司？」（可能會有少數例外，但設預設能讓啟發式更準）
@@ -164,7 +167,7 @@ python3 ~/.claude/skills/uber-receipt/scripts/main.py --list
 ## Phase 4：批次互動分配
 
 ```bash
-python3 ~/.claude/skills/uber-receipt/scripts/main.py \
+python3 {SKILL_DIR}/scripts/main.py \
   --batch '/Users/xxx/Downloads/' \
   --default-company 我的公司 \
   --json
@@ -191,7 +194,7 @@ JSON 出來後，**用 markdown table 列給使用者**：
 
 對每張 PDF 呼叫：
 ```bash
-python3 ~/.claude/skills/uber-receipt/scripts/main.py \
+python3 {SKILL_DIR}/scripts/main.py \
   --single '/path/to/receipt_xxx.pdf' \
   --company-label 我的公司
 ```
@@ -207,7 +210,7 @@ python3 .../main.py --single '/path/to/...pdf' --personal
 
 歸檔完跑：
 ```bash
-python3 ~/.claude/skills/uber-receipt/scripts/main.py --report 2026-04
+python3 {SKILL_DIR}/scripts/main.py --report 2026-04
 ```
 
 → 產 `~/Downloads/uber_receipts/2026-04/summary.csv` 和 `summary.md`
@@ -267,7 +270,7 @@ python3 ~/.claude/skills/uber-receipt/scripts/main.py --report 2026-04
 
 ```bash
 # 列公司
-python3 ~/.claude/skills/uber-receipt/scripts/main.py --list
+python3 {SKILL_DIR}/scripts/main.py --list
 
 # 看單一 PDF 解析結果（不動檔）
 python3 .../main.py --inspect '/path/to/receipt_xxx.pdf'

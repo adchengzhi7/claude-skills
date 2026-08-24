@@ -1,5 +1,8 @@
 # thsr-receipt
 
+> 本文指令路徑以手動安裝於 `~/.claude/skills/` 為例；若用 plugin marketplace 安裝，路徑換成該 plugin 的安裝目錄（Claude 載入 skill 時會知道）。
+
+
 自動下載**台灣高鐵**購票證明 / 交易紀錄 PDF 用於報帳，做成 [Claude Code](https://claude.com/claude-code) Skill / Plugin。
 
 > 姊妹專案：[tra-receipt](../tra-receipt/)（台鐵）

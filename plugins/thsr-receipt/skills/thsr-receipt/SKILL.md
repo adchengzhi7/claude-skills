@@ -5,6 +5,9 @@ description: 自動下載台灣高鐵購票證明 / 交易紀錄 PDF 用於報�
 
 # 台灣高鐵車票證明自動下載 — Claude 操作手冊
 
+> 路徑說明：`{SKILL_DIR}` ＝ 本 skill 的安裝目錄（skill 載入時系統會標示 base directory；手動裝在 `~/.claude/skills/` 的話就是那裡，plugin 安裝則在 plugin 快取目錄）。
+
+
 從 `ptis.thsrc.com.tw` 下載報帳 PDF，自動歸檔到 `~/Downloads/thsr_receipts/YYYY-MM/`，自動 qpdf 解密。
 **這份檔案是寫給「執行這個 skill 的 Claude」看的，不是寫給最終使用者**。
 
@@ -81,7 +84,7 @@ chmod 600 ~/.config/thsr-receipt/companies.json
 
 驗證：
 ```bash
-python3 ~/.claude/skills/thsr-receipt/scripts/download.py --list
+python3 {SKILL_DIR}/scripts/download.py --list
 ```
 
 ---
@@ -127,7 +130,7 @@ sips -s format jpeg -s formatOptions 70 --resampleWidth 800 \
 **每次都要問，不要假設用同一家**（使用者可能對多家公司請款）。
 
 ```bash
-python3 ~/.claude/skills/thsr-receipt/scripts/download.py --list
+python3 {SKILL_DIR}/scripts/download.py --list
 ```
 
 把清單列給使用者，問：「這次給哪家？」
@@ -143,7 +146,7 @@ python3 ~/.claude/skills/thsr-receipt/scripts/download.py --list
 
 ### T Express 對號座（最常見）
 ```bash
-python3 ~/.claude/skills/thsr-receipt/scripts/download.py \
+python3 {SKILL_DIR}/scripts/download.py \
   --pnr 12345678 --tid 2900000000000 \
   --date 2026-04-29 --from 南港 --to 台中 \
   --company-label "範例公司A"
@@ -151,7 +154,7 @@ python3 ~/.claude/skills/thsr-receipt/scripts/download.py \
 
 ### T Express 自由座
 ```bash
-python3 ~/.claude/skills/thsr-receipt/scripts/download.py \
+python3 {SKILL_DIR}/scripts/download.py \
   --tid 2900000000000 --date 2026-04-29 \
   --from 南港 --to 台中 \
   --seat-type free \
@@ -160,7 +163,7 @@ python3 ~/.claude/skills/thsr-receipt/scripts/download.py \
 
 ### 磁票 / QR Code 紙票
 ```bash
-python3 ~/.claude/skills/thsr-receipt/scripts/download.py \
+python3 {SKILL_DIR}/scripts/download.py \
   --ticket-type magnetic --seat-type free \
   --tid 0710601010526 --date 2026-04-11 \
   --from 台中 --to 南港 \

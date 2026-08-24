@@ -5,6 +5,9 @@ description: 從 Gmail 自動抓 SaaS 訂閱發票（Vercel / Supabase / Anthrop
 
 # cloud-receipts — Claude 操作手冊
 
+> 路徑說明：`{SKILL_DIR}` ＝ 本 skill 的安裝目錄（skill 載入時系統會標示 base directory；手動裝在 `~/.claude/skills/` 的話就是那裡，plugin 安裝則在 plugin 快取目錄）。
+
+
 把雲服務（Vercel / Supabase / Anthropic / Netlify 等）的月訂閱發票從 Gmail **自動抓附件 PDF**、歸檔到 `~/Downloads/cloud_receipts/<provider>/YYYY-MM/`。
 
 跟 `uber-receipt` 不同的地方：
@@ -18,7 +21,7 @@ description: 從 Gmail 自動抓 SaaS 訂閱發票（Vercel / Supabase / Anthrop
 
 ```bash
 which python3 || echo "❌ 缺 python3"
-python3 ~/.claude/skills/cloud-receipts/scripts/main.py --list
+python3 {SKILL_DIR}/scripts/main.py --list
 ```
 
 `--list` 會印：
@@ -38,7 +41,7 @@ EMAIL='someone@gmail.com'
 
 # 1. 寫入 gmail.json
 python3 -c "
-import sys; sys.path.insert(0, '$HOME/.claude/skills/cloud-receipts/scripts')
+import sys; sys.path.insert(0, '{SKILL_DIR}/scripts')
 from base.gmail_fetcher import add_account
 add_account('$EMAIL', label='dev')
 "
@@ -63,7 +66,7 @@ security add-generic-password -a "$EMAIL" -s 'cloud-receipts-gmail' -w 'XXXX XXX
 
 跑全部 provider：
 ```bash
-python3 ~/.claude/skills/cloud-receipts/scripts/main.py all --from-gmail
+python3 {SKILL_DIR}/scripts/main.py all --from-gmail
 ```
 
 跑單一 provider：
@@ -143,7 +146,7 @@ REGISTRY["github"] = GitHubProvider
 ## 快速指令
 
 ```bash
-python3 ~/.claude/skills/cloud-receipts/scripts/main.py --list           # 列 provider + accounts
+python3 {SKILL_DIR}/scripts/main.py --list           # 列 provider + accounts
 python3 .../main.py all --from-gmail --dry-run                            # 全 provider 試跑
 python3 .../main.py vercel --from-gmail --since 2026-01-01                # 單 provider 抓特定區間
 python3 .../main.py supabase --from-gmail --refetch                       # 略過 processed log

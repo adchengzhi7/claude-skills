@@ -22,10 +22,10 @@ PDF 檔名是 Google 內部 invoice ID（如 `5564799187.pdf`，可在 Google Wo
 
 ```bash
 # 1. 先確保 cloud-receipts 已設定 Gmail（共用 keychain）
-python3 ~/.claude/skills/cloud-receipts/scripts/main.py --list
+python3 <cloud-receipts 安裝目錄>/scripts/main.py --list
 
 # 2. 跑就好
-python3 ~/.claude/skills/google-bills/scripts/main.py
+python3 <google-bills 安裝目錄>/scripts/main.py
 ```
 
 ## 用法

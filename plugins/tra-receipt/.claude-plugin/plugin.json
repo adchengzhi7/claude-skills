@@ -1,6 +1,6 @@
 {
   "name": "tra-receipt",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "自動下載台鐵購票證明 PDF 用於報帳（macOS）。支援身分證 / 居留證統一證號，PDF 自動命名為「乘車日-起站-訖站-票號.pdf」並依 YYYY-MM 月份歸檔。",
   "author": {
     "name": "Alex Dee",

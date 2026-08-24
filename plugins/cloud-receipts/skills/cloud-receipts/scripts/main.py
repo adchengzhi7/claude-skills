@@ -129,7 +129,7 @@ def main():
             print("  EMAIL='your@gmail.com'")
             print("  PW='XXXX XXXX XXXX XXXX'  # https://myaccount.google.com/apppasswords")
             print("  python3 -c \"")
-            print("  import sys; sys.path.insert(0, '$HOME/.claude/skills/cloud-receipts/scripts')")
+            print("  import sys; sys.path.insert(0, '<本 skill 的 scripts 目錄>')")
             print("  from base.gmail_fetcher import add_account; add_account('$EMAIL')")
             print("  \"")
             print("  security add-generic-password -a \"$EMAIL\" -s 'cloud-receipts-gmail' -w \"$PW\" -U")

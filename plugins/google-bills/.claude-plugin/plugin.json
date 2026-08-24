@@ -1,6 +1,6 @@
 {
   "name": "google-bills",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "從 Gmail 抓 Google Payments 帳單 PDF（Workspace + GCP），依 subject 自動分流到 workspace/ 或 gcp/ 月份資料夾。",
   "author": {
     "name": "Alex Dee",
@@ -9,6 +9,16 @@
   "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/google-bills",
   "repository": "https://github.com/adchengzhi7/claude-skills",
   "license": "MIT",
-  "keywords": ["google-workspace", "gcp", "billing", "invoice", "expense", "automation", "macos"],
-  "platform": ["darwin"]
+  "keywords": [
+    "google-workspace",
+    "gcp",
+    "billing",
+    "invoice",
+    "expense",
+    "automation",
+    "macos"
+  ],
+  "platform": [
+    "darwin"
+  ]
 }

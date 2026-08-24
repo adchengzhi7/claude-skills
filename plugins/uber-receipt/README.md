@@ -1,5 +1,8 @@
 # uber-receipt
 
+> 本文指令路徑以手動安裝於 `~/.claude/skills/` 為例；若用 plugin marketplace 安裝，路徑換成該 plugin 的安裝目錄（Claude 載入 skill 時會知道）。
+
+
 > Claude Code skill：把 Uber 行程**全自動**抓下來、整理成可報帳 PDF。
 
 從 Gmail 抓 Uber 行程信 → 用你登入 session 下載官方行程明細 PDF + 統一發票 → 從 XML 自動歸戶到對的公司 → 按月/日整理。**5 分鐘 setup，之後跟 Claude 說「整理 Uber 收據」就自動跑完**。

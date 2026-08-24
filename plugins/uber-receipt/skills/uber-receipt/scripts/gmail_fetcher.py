@@ -140,7 +140,7 @@ def setup_instructions() -> str:
 
    python3 -c "
    import sys
-   sys.path.insert(0, '/Users/$USER/.claude/skills/uber-receipt/scripts')
+   sys.path.insert(0, '<本 skill 的 scripts 目錄>')
    from gmail_fetcher import save_gmail_email
    save_gmail_email('your@email.com')
    "

@@ -246,7 +246,7 @@ def step_5_dry_run():
 
     if not _yes("抓最近 30 天 Gmail Uber 信件試跑看看？"):
         print("\n📋 Setup 完成！日後直接跑：")
-        print("   python3 ~/.claude/skills/uber-receipt/scripts/main.py --from-gmail")
+        print(f"   python3 {Path(__file__).resolve().parent}/main.py --from-gmail")
         return True
 
     from datetime import datetime, timedelta
@@ -295,7 +295,7 @@ def run():
     print(f"{'=' * 60}\n")
     print("接下來你可以：")
     print("  • 跟 Claude 說「整理 Uber 收據」 — 全自動跑")
-    print("  • 或在 terminal 跑 `python3 ~/.claude/skills/uber-receipt/scripts/main.py --from-gmail`")
+    print(f"  • 或在 terminal 跑 `python3 {Path(__file__).resolve().parent}/main.py --from-gmail`")
     print("\n所有檔案會出現在 ~/Downloads/uber_receipts/YYYY-MM/YYYY-MM-DD/")
 
 

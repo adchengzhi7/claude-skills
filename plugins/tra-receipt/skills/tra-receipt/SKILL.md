@@ -5,6 +5,9 @@ description: 自動下載台鐵購票證明 PDF 用於報帳。當使用者說�
 
 # 台鐵購票證明自動下載 — Claude 操作手冊
 
+> 路徑說明：`{SKILL_DIR}` ＝ 本 skill 的安裝目錄（skill 載入時系統會標示 base directory；手動裝在 `~/.claude/skills/` 的話就是那裡，plugin 安裝則在 plugin 快取目錄）。
+
+
 從台鐵官網下載報帳用的 PDF，自動歸檔到 `~/Downloads/tra_receipts/YYYY-MM/`。
 **這份檔案是寫給「執行這個 skill 的 Claude」看的，不是寫給最終使用者**。
 
@@ -66,7 +69,7 @@ sips -s format jpeg -s formatOptions 70 --resampleWidth 800 \
 ## Phase 2：執行下載
 
 ```bash
-python3 ~/.claude/skills/tra-receipt/scripts/download.py 7397279
+python3 {SKILL_DIR}/scripts/download.py 7397279
 ```
 
 腳本會：
