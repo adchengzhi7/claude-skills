@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<style>
+  :root{--bg:#14161a;--card:#1d2027;--line:#2c3038;--ink:#e7e9ee;--mut:#9aa0ab;--acc:#e8720c}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"PingFang TC","Noto Sans TC",system-ui,sans-serif;
+    -webkit-text-size-adjust:100%;line-height:1.5}
+  .wrap{max-width:720px;margin:0 auto;padding:34px 20px 60px}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:24px}
+  a.card{display:block;text-decoration:none;color:inherit;background:var(--card);
+    border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:10px;
+    padding:14px 16px;margin-bottom:12px}
+  a.card:hover{border-color:#3a3f49;border-left-color:var(--acc)}
+  .card h2{font-size:15px;margin:0 0 3px}
+  .card p{margin:0;color:var(--mut);font-size:12.5px}
+  .card .meta{color:#6f7580;font-size:11.5px;margin-top:6px}
+  footer{color:#5a606b;font-size:12px;margin-top:28px}
+
+  /* ── 以下為搜尋／標籤／未分類區塊（2026-08-26 加，純附加，不影響卡片格式）── */
+  #pv-tools{margin:0 0 18px}
+  #pv-q{width:100%;background:var(--card);border:1px solid var(--line);border-radius:9px;
+    color:var(--ink);font-size:15px;padding:11px 13px;outline:none;
+    font-family:inherit;-webkit-appearance:none}
+  #pv-q:focus{border-color:var(--acc)}
+  .pv-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .pv-chip{background:var(--card);border:1px solid var(--line);color:var(--mut);
+    border-radius:20px;padding:4px 11px;font-size:12.5px;cursor:pointer;
+    font-family:inherit;line-height:1.5}
+  .pv-chip:hover{border-color:#3a3f49;color:var(--ink)}
+  .pv-chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  #pv-count{color:#6f7580;font-size:12px;margin-top:10px}
+  #pv-empty{display:none;color:var(--mut);font-size:14px;padding:20px 0}
+  /* 未分類頁面 */
+  #pv-orphan{margin-top:30px;border-top:1px solid var(--line);padding-top:18px}
+  #pv-orphan summary{cursor:pointer;color:var(--mut);font-size:13px;list-style:none}
+  #pv-orphan summary::-webkit-details-marker{display:none}
+  #pv-orphan summary::before{content:"▸ ";color:var(--acc)}
+  #pv-orphan[open] summary::before{content:"▾ "}
+  .pv-opage{display:block;text-decoration:none;color:var(--mut);font-size:12.5px;
+    padding:7px 10px;border-bottom:1px solid var(--line);word-break:break-all}
+  .pv-opage:hover{color:var(--ink);background:var(--card)}
+  .pv-opage i{color:#5a606b;font-style:normal;float:right;margin-left:10px}
+  /* Cmd+K 面板 */
+  #pv-pal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:99;
+    padding:10vh 16px 16px}
+  #pv-pal.on{display:block}
+  #pv-palbox{max-width:600px;margin:0 auto;background:var(--card);border:1px solid #3a3f49;
+    border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+  #pv-palq{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line);
+    color:var(--ink);font-size:16px;padding:15px 17px;outline:none;font-family:inherit}
+  #pv-pallist{max-height:56vh;overflow-y:auto}
+  .pv-hit{padding:10px 17px;border-bottom:1px solid var(--line);cursor:pointer}
+  .pv-hit.sel{background:#252932}
+  .pv-hit b{display:block;font-size:14px;font-weight:500;color:var(--ink)}
+  .pv-hit span{display:block;font-size:12px;color:#6f7580;margin-top:2px}
+  .pv-hint{padding:9px 17px;color:#5a606b;font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>{{TITLE}}</h1>
+  <div class="sub">Tailscale 私網 · 只有你的裝置連得到 · 沒有登入機制</div>
+
+
+  <div id="pv-tools">
+    <input id="pv-q" type="search" placeholder="搜尋標題、摘要、專案…　按 / 聚焦，⌘K 搜全站" autocomplete="off">
+    <div id="pv-chips" class="pv-chips"></div>
+    <div id="pv-count"></div>
+  </div>
+  <div id="pv-empty">找不到符合的項目。試試清掉篩選，或按 ⌘K 搜尋全站頁面（含沒有卡片的）。</div>
+  
+
+  <footer>這份清單由發佈腳本維護，新增預覽時會自動加卡片。</footer>
+</div>
+
+<div id="pv-pal"><div id="pv-palbox">
+  <input id="pv-palq" type="search" placeholder="搜尋全站頁面…" autocomplete="off">
+  <div id="pv-pallist"></div>
+  <div class="pv-hint">↑↓ 選擇 · Enter 開啟 · Esc 關閉</div>
+</div></div>
+<script>
+(function(){
+  var cards=[].slice.call(document.querySelectorAll('a.card'));
+  var items=cards.map(function(el){
+    var meta=(el.querySelector('.meta')||{}).textContent||'';
+    var parts=meta.split('\u00b7').map(function(x){return x.trim()}).filter(Boolean);
+    var tag=parts.length>=2?parts[1]:'';
+    var title=(el.querySelector('h2')||{}).textContent||'';
+    var desc=(el.querySelector('p')||{}).textContent||'';
+    return {el:el,tag:tag,title:title,desc:desc,meta:meta,
+            href:el.getAttribute('href')||'',
+            hay:(title+' '+desc+' '+meta+' '+decodeURIComponent(el.getAttribute('href')||'')).toLowerCase()};
+  });
+
+  /* ── 標籤 ── */
+  var counts={};
+  items.forEach(function(it){ if(it.tag) counts[it.tag]=(counts[it.tag]||0)+1; });
+  var tags=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a]||a.localeCompare(b)});
+  var chips=document.getElementById('pv-chips'), active='';
+  function chip(label,val,n){
+    var b=document.createElement('button');
+    b.className='pv-chip'; b.textContent=label+(n!=null?' '+n:'');
+    b.onclick=function(){ active=(active===val?'':val); render(); };
+    b.dataset.val=val; return b;
+  }
+  chips.appendChild(chip('全部','',items.length));
+  tags.slice(0,18).forEach(function(t){ chips.appendChild(chip(t,t,counts[t])); });
+
+  /* ── 篩選 ── */
+  var q=document.getElementById('pv-q'), cnt=document.getElementById('pv-count'),
+      empty=document.getElementById('pv-empty');
+  function render(){
+    var raw=(q.value||'').trim().toLowerCase();
+    var ts=raw?raw.split(/\s+/).filter(Boolean):[];
+    var n=0;
+    items.forEach(function(it){
+      var ok=(!active||it.tag===active)&&ts.every(function(t){return it.hay.indexOf(t)>=0});
+      it.el.style.display=ok?'':'none'; if(ok)n++;
+    });
+    cnt.textContent=n+' / '+items.length+' 項'+(active?'　·　標籤：'+active:'');
+    empty.style.display=n?'none':'block';
+    [].forEach.call(chips.children,function(b){
+      b.classList.toggle('on', b.dataset.val===active);
+    });
+  }
+  q.addEventListener('input',render);
+  render();
+
+  /* ── Cmd+K 全站面板（含沒有卡片的頁面）── */
+  var all=items.map(function(it){
+    return {t:it.title||it.href,s:it.meta,h:it.href,
+            k:(it.hay)};
+  });
+  var loaded=false;
+  fetch('/_pages.json',{cache:'no-store'}).then(function(r){return r.json()}).then(function(rows){
+    var have={}; items.forEach(function(it){ have[decodeURIComponent(it.href).replace(/^\//,'')]=1; });
+    var orphans=rows.filter(function(r){ return !have[r.f] });
+    orphans.forEach(function(r){
+      all.push({t:r.f,s:r.t+' · 未分類（沒有卡片）',h:'/'+encodeURIComponent(r.f),
+                k:(r.f+' '+r.t).toLowerCase()});
+    });
+    loaded=true;
+    if(orphans.length){
+      var d=document.createElement('details'); d.id='pv-orphan';
+      var sm=document.createElement('summary');
+      sm.textContent='未分類頁面 '+orphans.length+' 個（發佈時沒建卡片，在清單上看不到）';
+      d.appendChild(sm);
+      orphans.forEach(function(r){
+        var a=document.createElement('a');
+        a.className='pv-opage'; a.href='/'+encodeURIComponent(r.f);
+        a.textContent=r.f;
+        var i=document.createElement('i'); i.textContent=r.t; a.appendChild(i);
+        d.appendChild(a);
+      });
+      var f=document.querySelector('footer');
+      f.parentNode.insertBefore(d,f);
+    }
+  }).catch(function(){});
+
+  var pal=document.getElementById('pv-pal'), palq=document.getElementById('pv-palq'),
+      pallist=document.getElementById('pv-pallist'), sel=0, hits=[];
+  function score(k,terms){
+    var tot=0;
+    for(var i=0;i<terms.length;i++){
+      var p=k.indexOf(terms[i]);
+      if(p<0) return -1;
+      tot += 1000 - (p<999?p:999);
+    }
+    return tot;
+  }
+  function palRender(){
+    var raw=(palq.value||'').trim().toLowerCase();
+    var s=raw?raw.split(/\s+/).filter(Boolean):null;
+    hits=(s&&s.length?all.map(function(a){return {a:a,sc:score(a.k,s)}})
+             .filter(function(x){return x.sc>=0})
+             .sort(function(a,b){return b.sc-a.sc}).slice(0,40).map(function(x){return x.a})
+            :all.slice(0,40));
+    sel=0;
+    pallist.innerHTML='';
+    hits.forEach(function(h,i){
+      var d=document.createElement('div'); d.className='pv-hit'+(i===sel?' sel':'');
+      var b=document.createElement('b'); b.textContent=h.t;
+      var sp=document.createElement('span'); sp.textContent=h.s||'';
+      d.appendChild(b); d.appendChild(sp);
+      d.onclick=function(){ location.href=h.h; };
+      pallist.appendChild(d);
+    });
+    if(!hits.length){ pallist.innerHTML='<div class="pv-hint">沒有符合的頁面'+(loaded?'':'（全站清單還在載入…）')+'</div>'; }
+  }
+  function move(d){
+    if(!hits.length)return;
+    var els=pallist.querySelectorAll('.pv-hit');
+    if(els[sel])els[sel].classList.remove('sel');
+    sel=(sel+d+hits.length)%hits.length;
+    els[sel].classList.add('sel'); els[sel].scrollIntoView({block:'nearest'});
+  }
+  function open_(){ pal.classList.add('on'); palq.value=''; palRender(); palq.focus(); }
+  function close_(){ pal.classList.remove('on'); }
+  document.addEventListener('keydown',function(e){
+    if((e.metaKey||e.ctrlKey)&&(e.key==='k'||e.key==='K')){ e.preventDefault(); pal.classList.contains('on')?close_():open_(); return; }
+    /* 「/」聚焦上方搜尋框——Cmd+K 在部分瀏覽器會被系統攔走，這是備援 */
+    var t=e.target||{}, tn=(t.tagName||'').toUpperCase();
+    if(e.key==='/'&&!e.metaKey&&!e.ctrlKey&&tn!=='INPUT'&&tn!=='TEXTAREA'&&!pal.classList.contains('on')){
+      e.preventDefault(); q.focus(); q.select(); return;
+    }
+    if(!pal.classList.contains('on'))return;
+    if(e.key==='Escape'){ close_(); }
+    else if(e.key==='ArrowDown'){ e.preventDefault(); move(1); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); move(-1); }
+    else if(e.key==='Enter'){ if(hits[sel]) location.href=hits[sel].h; }
+  });
+  palq.addEventListener('input',palRender);
+  pal.addEventListener('click',function(e){ if(e.target===pal) close_(); });
+})();
+</script>
+</body>
+</html>

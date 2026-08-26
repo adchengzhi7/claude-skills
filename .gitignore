@@ -29,3 +29,8 @@ companies.json
 **/companies.json
 !**/companies.example.json
 thsr_receipts/
+
+# 預覽站的機器設定 — 含個人 Tailscale IP 與路徑，絕不上 git
+config.env
+**/config.env
+!**/config.example.env

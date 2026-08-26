@@ -1,0 +1,25 @@
+{
+  "name": "tailscale-preview-site",
+  "version": "1.0.0",
+  "description": "自架一個只有自己 Tailscale 網路連得到的私人預覽站：把 HTML 報告、計畫、原型發佈上去，手機平板打開就能看，不需登入、不經第三方。含首頁搜尋、專案標籤、Cmd+K 全站搜尋與開機自動啟動。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/tailscale-preview-site",
+  "repository": "https://github.com/adchengzhi7/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "tailscale",
+    "preview",
+    "static-site",
+    "self-hosted",
+    "report",
+    "sharing",
+    "claude-code"
+  ],
+  "platform": [
+    "darwin",
+    "linux"
+  ]
+}

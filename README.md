@@ -100,11 +100,14 @@ Claude 會：
 | **[mockup-demo](./plugins/mockup-demo/)** v1.0 | 把講不清楚的需求變成可以點的互動原型：一次端 2-3 個方案讓人挑，定稿那份就是驗收清單 | 跨平台 |
 | **[html-note](./plugins/html-note/)** v1.0 | 長結論不要倒進聊天視窗：超過 30 行的交付物出成 HTML，只回網址加三行重點 | 跨平台 |
 | **[tune-flow](./plugins/tune-flow/)** v1.0 | 每月一次工作流程健檢：從實際紀錄抓摩擦、三方對立辯論、停下等人拍板、決策留檔 | 跨平台 |
+| **[tailscale-preview-site](./plugins/tailscale-preview-site/)** v1.0 | 自架私人預覽站：HTML 報告發佈到只有自己 Tailscale 網路連得到的站，手機平板直接看、不需登入、不經第三方 | macOS / Linux |
 | _（更多會陸續上架）_ | | |
 
 收據類 plugin 都做月份分檔（`~/Downloads/.../2026-04/...`）方便月報帳整批拉；meeting-notes 是純 prompt 能力、免裝相依套件。
 
 mockup-demo / html-note / tune-flow 這三支是**純 prompt 能力**（沒有腳本、免裝相依套件），寫的是工作方法與踩過的雷；建議當範本改，不要照抄。
+
+tailscale-preview-site 需要**一台常開的機器**（Mac mini / NAS / 舊筆電）與 Tailscale 帳號——沒有的話這支幫不上忙，先看 SETUP.md 的條件再裝。它和 html-note 是一組：html-note 講「什麼該出成網頁」，這支講「網頁放哪裡」。
 
 ---
 
