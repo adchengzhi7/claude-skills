@@ -1,0 +1,20 @@
+{
+  "name": "mockup-demo",
+  "version": "1.0.0",
+  "description": "把講不清楚的需求變成可以點的互動原型：一次端 2-3 個方案讓決策者挑，定稿後那份就是驗收清單。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/mockup-demo",
+  "repository": "https://github.com/adchengzhi7/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "mockup",
+    "prototype",
+    "ui",
+    "requirements",
+    "design-review",
+    "claude-code"
+  ]
+}

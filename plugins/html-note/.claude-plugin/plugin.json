@@ -1,0 +1,20 @@
+{
+  "name": "html-note",
+  "version": "1.0.0",
+  "description": "長結論不要倒進聊天視窗：超過 30 行的交付物一律出成好讀的 HTML，只回一個網址加三行重點。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/html-note",
+  "repository": "https://github.com/adchengzhi7/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "report",
+    "deliverable",
+    "html",
+    "documentation",
+    "communication",
+    "claude-code"
+  ]
+}

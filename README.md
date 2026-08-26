@@ -97,9 +97,14 @@ Claude 會：
 | **[google-bills](./plugins/google-bills/)** v1.0 | 從 Gmail 抓 Google Payments 帳單 PDF（Workspace + GCP），自動分流月份資料夾 | macOS |
 | **[share-skill](./plugins/share-skill/)** v1.0 | 公開 skill 前自動掃 PII 洩漏（email / 統編 / 車牌 / 發票號等），含 pre-commit hook | macOS |
 | **[meeting-notes](./plugins/meeting-notes/)** v1.0 | 把語音自動轉的會議逐字稿整理成結構化會議記錄（摘要 / 決議 / 待辦 / 待釐清）| 跨平台 |
+| **[mockup-demo](./plugins/mockup-demo/)** v1.0 | 把講不清楚的需求變成可以點的互動原型：一次端 2-3 個方案讓人挑，定稿那份就是驗收清單 | 跨平台 |
+| **[html-note](./plugins/html-note/)** v1.0 | 長結論不要倒進聊天視窗：超過 30 行的交付物出成 HTML，只回網址加三行重點 | 跨平台 |
+| **[tune-flow](./plugins/tune-flow/)** v1.0 | 每月一次工作流程健檢：從實際紀錄抓摩擦、三方對立辯論、停下等人拍板、決策留檔 | 跨平台 |
 | _（更多會陸續上架）_ | | |
 
 收據類 plugin 都做月份分檔（`~/Downloads/.../2026-04/...`）方便月報帳整批拉；meeting-notes 是純 prompt 能力、免裝相依套件。
+
+mockup-demo / html-note / tune-flow 這三支是**純 prompt 能力**（沒有腳本、免裝相依套件），寫的是工作方法與踩過的雷；建議當範本改，不要照抄。
 
 ---
 

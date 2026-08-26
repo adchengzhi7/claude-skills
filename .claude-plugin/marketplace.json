@@ -132,6 +132,47 @@
         "productivity",
         "claude-code"
       ]
+    },
+    {
+      "name": "mockup-demo",
+      "source": "./plugins/mockup-demo",
+      "description": "把講不清楚的需求變成可以點的互動原型：一次端 2-3 個方案讓決策者挑，定稿後那份就是驗收清單。",
+      "version": "1.0.0",
+      "category": "productivity",
+      "keywords": [
+        "mockup",
+        "prototype",
+        "ui",
+        "requirements",
+        "design-review"
+      ]
+    },
+    {
+      "name": "html-note",
+      "source": "./plugins/html-note",
+      "description": "長結論不要倒進聊天視窗：超過 30 行的交付物一律出成好讀的 HTML，只回一個網址加三行重點。",
+      "version": "1.0.0",
+      "category": "productivity",
+      "keywords": [
+        "report",
+        "deliverable",
+        "html",
+        "documentation",
+        "communication"
+      ]
+    },
+    {
+      "name": "tune-flow",
+      "source": "./plugins/tune-flow",
+      "description": "每月一次的工作流程健檢：從實際紀錄抓摩擦，派三個立場對立的角色辯論，收斂成清單等人拍板，決策留檔避免重蹈。",
+      "version": "1.0.0",
+      "category": "productivity",
+      "keywords": [
+        "retrospective",
+        "workflow",
+        "process-improvement",
+        "multi-agent"
+      ]
     }
   ]
 }

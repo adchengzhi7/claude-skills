@@ -1,0 +1,19 @@
+{
+  "name": "tune-flow",
+  "version": "1.0.0",
+  "description": "每月一次的工作流程健檢：從實際紀錄抓摩擦，派三個立場對立的角色辯論，收斂成清單等人拍板，決策留檔避免重蹈。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/tune-flow",
+  "repository": "https://github.com/adchengzhi7/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "retrospective",
+    "workflow",
+    "process-improvement",
+    "multi-agent",
+    "claude-code"
+  ]
+}
