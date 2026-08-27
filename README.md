@@ -41,6 +41,15 @@
 
 之後我有新的 skill，你只要 `/plugin install <new-name>` 就好，**不用再 add marketplace**。
 
+### 用 Codex？也裝得起來
+
+Codex 吃一模一樣的 SKILL.md 格式。用它內建的 skill-installer 直接從這個 repo 裝：
+
+> 「用 skill-installer 從 https://github.com/adchengzhi7/claude-skills 裝 mockup-demo」
+
+純 prompt 類的 skill（mockup-demo / html-note / tune-flow / meeting-notes）裝了就能用；
+帶腳本的報帳類 skill 以 Claude Code 為主，其他環境沒實測過。
+
 ---
 
 ## 第一次跟你的 Claude 講
@@ -97,9 +106,9 @@ Claude 會：
 | **[google-bills](./plugins/google-bills/)** v1.0 | 從 Gmail 抓 Google Payments 帳單 PDF（Workspace + GCP），自動分流月份資料夾 | macOS |
 | **[share-skill](./plugins/share-skill/)** v1.0 | 公開 skill 前自動掃 PII 洩漏（email / 統編 / 車牌 / 發票號等），含 pre-commit hook | macOS |
 | **[meeting-notes](./plugins/meeting-notes/)** v1.0 | 把語音自動轉的會議逐字稿整理成結構化會議記錄（摘要 / 決議 / 待辦 / 待釐清）| 跨平台 |
-| **[mockup-demo](./plugins/mockup-demo/)** v1.0 | 把講不清楚的需求變成可以點的互動原型：一次端 2-3 個方案讓人挑，定稿那份就是驗收清單 | 跨平台 |
-| **[html-note](./plugins/html-note/)** v1.0 | 長結論不要倒進聊天視窗：超過 30 行的交付物出成 HTML，只回網址加三行重點 | 跨平台 |
-| **[tune-flow](./plugins/tune-flow/)** v1.0 | 每月一次工作流程健檢：從實際紀錄抓摩擦、三方對立辯論、停下等人拍板、決策留檔 | 跨平台 |
+| **[mockup-demo](./plugins/mockup-demo/)** v1.1 | 把講不清楚的需求變成可以點的互動原型：一次端 2-3 個方案讓人挑，定稿那份就是驗收清單 | 跨平台 |
+| **[html-note](./plugins/html-note/)** v1.1 | 長結論不要倒進聊天視窗：超過 30 行的交付物出成 HTML，只回連結或檔案路徑加三行重點 | 跨平台 |
+| **[tune-flow](./plugins/tune-flow/)** v1.1 | 每月一次工作流程健檢：從實際紀錄抓摩擦、三方對立辯論、停下等人拍板、決策留檔 | 跨平台 |
 | **[tailscale-preview-site](./plugins/tailscale-preview-site/)** v1.0 | 自架私人預覽站：HTML 報告發佈到只有自己 Tailscale 網路連得到的站，手機平板直接看、不需登入、不經第三方 | macOS / Linux |
 | _（更多會陸續上架）_ | | |
 
