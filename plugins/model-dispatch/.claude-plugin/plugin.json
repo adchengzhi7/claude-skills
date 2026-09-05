@@ -1,0 +1,19 @@
+{
+  "name": "model-dispatch",
+  "version": "1.0.0",
+  "description": "讓子 agent 自動跑在對的模型檔位：專才 agent 綁死模型、萬用 agent 沒選模型就被 hook 擋下、派工表範本、每週對帳提醒與報表。主 session 不切模型。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/model-dispatch",
+  "repository": "https://github.com/adchengzhi7/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "model-routing",
+    "cost",
+    "subagent",
+    "hooks",
+    "claude-code"
+  ]
+}

@@ -189,6 +189,20 @@
         "sharing",
         "claude-code"
       ]
+    },
+    {
+      "name": "model-dispatch",
+      "source": "./plugins/model-dispatch",
+      "description": "讓子 agent 自動跑在對的模型檔位：專才 agent 綁死模型、萬用 agent 沒選模型就被 hook 擋下、派工表範本、每週對帳提醒與報表。主 session 不切模型。",
+      "version": "1.0.0",
+      "category": "developer-tools",
+      "keywords": [
+        "model-routing",
+        "cost",
+        "subagent",
+        "hooks",
+        "claude-code"
+      ]
     }
   ]
 }
