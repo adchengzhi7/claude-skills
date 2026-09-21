@@ -32,10 +32,30 @@ Claude Code plugin：讓子 agent 自動跑在對的模型檔位。主 session �
 1. 把 `templates/dispatch-table.md` 的內容貼進你的 CLAUDE.md，照自己的模型與預算改。
 2. 幫你常用的具名 agent 加上 `model:` frontmatter（範本 `templates/agent-frontmatter.md`）。
 
+## 怎麼知道閘門還活著
+
+閘門也是程式，程式會壞——而且壞的方式最陰險：**沒有任何錯誤訊息，看起來一切正常，其實完全沒在攔**。
+（真實踩過：Claude Code 把派工工具從一個名字改成另一個，只認舊名字的閘門靜默失效了好幾天，直到有人回頭看數字才發現。）
+
+裝好之後自帶兩道防線，不用額外設定：
+
+1. **打卡紀錄**：閘門每被叫到一次就記一筆到 `$CLAUDE_PLUGIN_DATA/dispatch-guard.jsonl`（沒有這個變數就退到 `~/.claude/plugin-data/model-dispatch/`），看得出它到底有沒有在跑。
+2. **看門狗＋金絲雀**（`hooks/health.py`，SessionStart 自動掛）：
+   - 看門狗：近 48 小時有派工卻閘門 0 次打卡、或派工工具出現閘門不認得的新名字 → 開場提醒一行。
+   - 金絲雀：偵測到 Claude Code 版本變了，自動跑一次 `hooks/test.sh`（餵幾筆「該被擋」的假派工），沒擋住就警告。
+
+一切正常時完全不出聲，只在真的有問題時才在開場 context 多一行。也可以手動跑：
+
+```
+bash hooks/test.sh
+```
+
 ## 裡面有什麼
 
-- `hooks/dispatch-guard.sh` ＋ `dispatch-guard.py`：PreToolUse hook，matcher 同時收 `Agent` 與 `Task` 兩個名字（工具曾改名，只收一個會靜默失效四天）。
+- `hooks/dispatch-guard.sh` ＋ `dispatch-guard.py`：PreToolUse hook，matcher 同時收 `Agent` 與 `Task` 兩個名字（工具曾改名，只收一個會靜默失效四天）；每次判斷都會打卡。
 - `hooks/review-reminder.sh`：SessionStart hook，日期戳放 `$CLAUDE_PLUGIN_DATA/last-review`（沒有這個變數就退到 `~/.claude/plugin-data/model-dispatch/`）。
+- `hooks/health.sh` ＋ `health.py`：SessionStart hook，看門狗＋金絲雀（見上一節）。
+- `hooks/test.sh`：金絲雀測試腳本，本機也能手動跑。
 - `skills/model-dispatch-review`：週回顧流程 ＋ `dispatch-ratio.py`（核心指標：萬用 agent 明確帶 model 的比例、各 agent 實際模型分布）＋ `mark-reviewed.sh`（重置計時）。
 - `skills/agent-usage-report`：哪個 agent 被派幾次、哪些專案在用、哪些 30 天沒人碰（kill-switch 候選）。
 - `templates/`：派工表與 agent frontmatter 範本。
@@ -47,6 +67,7 @@ Claude Code plugin：讓子 agent 自動跑在對的模型檔位。主 session �
 | `DISPATCH_GUARD_ALSO` | 把 `Explore,Plan` 也納入必須帶 model 的名單 | 不納入 |
 | `MODEL_DISPATCH_REVIEW_DAYS` | 幾天沒回顧就提醒 | 7 |
 | `AGENT_USAGE_TRACKED` | 報表裡單獨追蹤的 agent（逗號分隔） | 無 |
+| `DISPATCH_GUARD_LOG` | 打卡紀錄檔路徑（看門狗讀這個） | `$CLAUDE_PLUGIN_DATA/dispatch-guard.jsonl` |
 
 ## 誠實邊界
 

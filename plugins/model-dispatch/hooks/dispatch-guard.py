@@ -22,6 +22,23 @@ fail-open：解析不出輸入就放行（這層是減速帶，不是唯一防�
 import json
 import os
 import sys
+import time
+
+# 打卡紀錄：閘門每被叫到一次就記一筆，讓「它到底有沒有在跑」看得見（不是靠印象）。
+# 看門狗（health.py）拿它對照真實派工次數；記錄失敗不影響放行判斷（寧可少記，不可擋錯）。
+_DATA_DIR = os.environ.get("CLAUDE_PLUGIN_DATA") or os.path.expanduser("~/.claude/plugin-data/model-dispatch")
+LOG = os.environ.get("DISPATCH_GUARD_LOG") or os.path.join(_DATA_DIR, "dispatch-guard.jsonl")
+
+
+def punch(tool, subagent, has_model, decision):
+    try:
+        os.makedirs(os.path.dirname(LOG), exist_ok=True)
+        with open(LOG, "a") as f:
+            f.write(json.dumps({"ts": int(time.time()), "tool": tool, "subagent": subagent,
+                                "has_model": has_model, "decision": decision}, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
 
 # 只管這幾個「什麼都能做」的入口；具名專才有自己的 frontmatter 綁定
 CATCH_ALL = {"general-purpose", "claude", ""}
@@ -55,23 +72,28 @@ def main():
         sys.exit(0)
 
     # Claude Code 曾把子 agent 工具從 Task 改名成 Agent；兩個名字都收，換版不會靜默失效。
-    if (data.get("tool_name") or "") not in ("Agent", "Task"):
+    tool = data.get("tool_name") or ""
+    if tool not in ("Agent", "Task"):
         sys.exit(0)
 
     tool_input = data.get("tool_input") or {}
     if not isinstance(tool_input, dict):
+        punch(tool, None, None, "allow-unparsed")
         sys.exit(0)
 
     subagent = (tool_input.get("subagent_type") or "").strip()
+    model = (tool_input.get("model") or "").strip()
     if subagent in INHERIT_BY_DESIGN:
+        punch(tool, subagent, bool(model), "allow-fork")
         sys.exit(0)
     if subagent not in CATCH_ALL:
+        punch(tool, subagent, bool(model), "allow-named")
         sys.exit(0)
-
-    model = (tool_input.get("model") or "").strip()
     if model:
+        punch(tool, subagent, True, "allow")
         sys.exit(0)
 
+    punch(tool, subagent, False, "block")
     label = subagent or "(未指定 subagent_type)"
     print("\n".join([GUIDE[0], f"   這次派的是：{label}"] + GUIDE[1:]), file=sys.stderr)
     sys.exit(2)
