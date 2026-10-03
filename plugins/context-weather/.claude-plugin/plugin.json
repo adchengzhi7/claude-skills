@@ -1,0 +1,20 @@
+{
+  "name": "context-weather",
+  "version": "0.1.0",
+  "description": "Claude Code mod：輸入框上方多一列，用天氣顯示這段對話的空間還剩多少；快滿時提醒一次，可展開看是誰在佔空間。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/context-weather",
+  "repository": "https://github.com/adchengzhi7/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "mod",
+    "context-window",
+    "tokens",
+    "statusline",
+    "claude-code"
+  ],
+  "types": "./types/index.d.ts"
+}

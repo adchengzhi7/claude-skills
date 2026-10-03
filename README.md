@@ -111,6 +111,8 @@ Claude 會：
 | **[tune-flow](./plugins/tune-flow/)** v1.1 | 每月一次工作流程健檢：從實際紀錄抓摩擦、三方對立辯論、停下等人拍板、決策留檔 | 跨平台 |
 | **[tailscale-preview-site](./plugins/tailscale-preview-site/)** v1.0 | 自架私人預覽站：HTML 報告發佈到只有自己 Tailscale 網路連得到的站，手機平板直接看、不需登入、不經第三方 | macOS / Linux |
 | **[model-dispatch](./plugins/model-dispatch/)** v1.0 | 讓子 agent 自動跑在對的模型檔位：專才綁死模型、萬用 agent 沒選模型就被 hook 擋下、派工表範本、每週對帳提醒 | 跨平台（需 python3） |
+| **[context-weather](./plugins/context-weather/)** v0.1 | Claude Code mod：輸入框上方多一列，用天氣顯示對話空間還剩多少，快滿時提醒一次 | 跨平台（需 Claude Code Mods） |
+| **[session-overview](./plugins/session-overview/)** v0.1 | Claude Code mod：打 `/overview` 開面板，一次看對話空間、花費、額度、正在跑的子 agent | 跨平台（需 Claude Code Mods） |
 | _（更多會陸續上架）_ | | |
 
 收據類 plugin 都做月份分檔（`~/Downloads/.../2026-04/...`）方便月報帳整批拉；meeting-notes 是純 prompt 能力、免裝相依套件。

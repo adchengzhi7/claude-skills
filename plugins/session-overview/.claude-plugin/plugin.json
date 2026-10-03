@@ -1,0 +1,20 @@
+{
+  "name": "session-overview",
+  "version": "0.1.0",
+  "description": "Claude Code mod：打 /overview，旁邊開一個面板，一次看對話空間、花費、額度（含多久後重置）、正在跑的子 agent。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/session-overview",
+  "repository": "https://github.com/adchengzhi7/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "mod",
+    "dashboard",
+    "rate-limits",
+    "subagent",
+    "claude-code"
+  ],
+  "types": "./types/index.d.ts"
+}
