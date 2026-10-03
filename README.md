@@ -113,6 +113,7 @@ Claude 會：
 | **[model-dispatch](./plugins/model-dispatch/)** v1.0 | 讓子 agent 自動跑在對的模型檔位：專才綁死模型、萬用 agent 沒選模型就被 hook 擋下、派工表範本、每週對帳提醒 | 跨平台（需 python3） |
 | **[context-weather](./plugins/context-weather/)** v0.1 | Claude Code mod：輸入框上方多一列，用天氣顯示對話空間還剩多少，快滿時提醒一次 | 跨平台（需 Claude Code Mods） |
 | **[session-overview](./plugins/session-overview/)** v0.1 | Claude Code mod：打 `/overview` 開面板，一次看對話空間、花費、額度、正在跑的子 agent | 跨平台（需 Claude Code Mods） |
+| **[session-office](./plugins/session-office/)** v0.1 | 把每個 Claude Code session 畫成一間辦公室：誰在等你、誰在跑、誰出狀況，點卡片切 tmux 視窗；長相可以換成自己的外觀包 | macOS / Linux（需 python3） |
 | _（更多會陸續上架）_ | | |
 
 收據類 plugin 都做月份分檔（`~/Downloads/.../2026-04/...`）方便月報帳整批拉；meeting-notes 是純 prompt 能力、免裝相依套件。
@@ -122,6 +123,8 @@ mockup-demo / html-note / tune-flow 這三支是**純 prompt 能力**（沒有�
 tailscale-preview-site 需要**一台常開的機器**（Mac mini / NAS / 舊筆電）與 Tailscale 帳號——沒有的話這支幫不上忙，先看 SETUP.md 的條件再裝。它和 html-note 是一組：html-note 講「什麼該出成網頁」，這支講「網頁放哪裡」。
 
 model-dispatch 裝了會掛兩支 hook（一支在你派萬用 agent 又沒帶 model 時擋下、一支每週提醒對帳），**不會自動改你的設定**——派工表要你自己貼進 CLAUDE.md、agent 的 model 要你自己寫進 frontmatter，範本都在 `templates/`。
+
+session-office **不掛 hook、不改 Claude Code 的任何設定**（它自己的設定與記憶放在 `~/.config/session-office/`、`~/.local/state/session-office/`）：你叫它開，它才啟動一個只聽本機（127.0.0.1）的小網站，讀 Claude Code 自己記的 session 狀態畫成辦公室。頁面上會有你的對話片段，所以刻意不提供對外的開關；長相可以請你的 Claude 照 `THEMES.md` 做一個自己的外觀包。不支援原生 Windows。
 
 ---
 

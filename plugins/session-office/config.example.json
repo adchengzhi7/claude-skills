@@ -1,0 +1,9 @@
+{
+  "theme": "pixel-office",
+  "groups": [
+    { "name": "客戶A", "color": "#d9480f", "match": "client-a|客戶A" },
+    { "name": "自己的工具", "color": "#495057", "match": "dotfiles|\\.claude|scripts" }
+  ],
+  "mark": { "label": "重要", "match": "urgent|很急" },
+  "ballPhrases": ["現在球在你這裡的是："]
+}

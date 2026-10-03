@@ -1,0 +1,19 @@
+{
+  "name": "session-office",
+  "version": "0.1.0",
+  "description": "把這台電腦上每個 Claude Code session 畫成一間辦公室：誰在等你、誰在跑、誰做完、誰出狀況，點卡片切到那個 tmux 視窗。長相可以換成自己的外觀包。只聽本機、只用 Python 內建功能。",
+  "author": {
+    "name": "Alex Dee",
+    "email": "alex@agoodbarn.com"
+  },
+  "homepage": "https://github.com/adchengzhi7/claude-skills/tree/main/plugins/session-office",
+  "repository": "https://github.com/adchengzhi7/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "sessions",
+    "dashboard",
+    "tmux",
+    "themes",
+    "claude-code"
+  ]
+}
