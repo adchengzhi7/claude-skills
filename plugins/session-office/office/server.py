@@ -112,7 +112,10 @@ class Office:
             data, state = collect.collect(now, cfg, self.paths, None, **args)
             why = type(e).__name__
             # 畫面上那句提醒只出現一輪，所以另外印一行（會進 server.log），事後才查得到發生過什麼
-            print("記憶有問題，已丟掉重來：" + why + "：" + str(e)[:200], file=sys.stderr, flush=True)
+            try:
+                print("記憶有問題，已丟掉重來：" + why + "：" + str(e)[:200], file=sys.stderr, flush=True)
+            except Exception:  # 留紀錄是順手的事，寫不出去（輸出端已經不在）不能反過來讓整頁看不到
+                pass
             return {**data, "warnings": data["warnings"] + ["辦公室的記憶有問題（" + why + "），已經丟掉重來（「已關閉」清單會從頭記起）"]}, state
 
     def loop(self):

@@ -340,6 +340,20 @@ class ServerTest(unittest.TestCase):
             second = self.office.refresh()  # 記憶已經換成乾淨的，下一輪不再提醒
             self.assertEqual((second["ok"], second["data"]["warnings"]), (True, []))
 
+    def test_losing_the_log_output_does_not_blank_the_page_after_a_memory_reset(self):
+        from unittest import mock
+        self.home.proc(101, status="busy")
+        os.makedirs(os.path.dirname(self.state_path))
+        with open(self.state_path, "w") as fh:
+            json.dump({"v": 1, "transcripts": {}, "tpaths": {}, "seen": {"test-session-dddd": {"lastSeen": "字串"}}}, fh)
+        office = server.Office(self.home.paths, self.cfg_path, self.state_path, self.user_themes, clock=self.clock,
+                               alive=lambda pid: True, tmux_bin=self.tmux)
+        with mock.patch("builtins.print", side_effect=BrokenPipeError("輸出端不在了")):
+            snap = office.refresh()
+        self.assertTrue(snap["ok"], snap)
+        self.assertEqual(len(snap["data"]["sessions"]), 1)
+        self.assertIn("記憶有問題", snap["data"]["warnings"][0])
+
 
 if __name__ == "__main__":
     unittest.main()

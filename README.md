@@ -122,7 +122,7 @@ tailscale-preview-site 需要**一台常開的機器**（Mac mini / NAS / 舊筆
 
 model-dispatch 裝了會掛兩支 hook（一支在你派萬用 agent 又沒帶 model 時擋下、一支每週提醒對帳），**不會自動改你的設定**——派工表要你自己貼進 CLAUDE.md、agent 的 model 要你自己寫進 frontmatter，範本都在 `templates/`。
 
-session-office **不掛 hook、不改任何設定**：你叫它開，它才啟動一個只聽本機（127.0.0.1）的小網站，讀 Claude Code 自己記的 session 狀態畫成辦公室。頁面上會有你的對話片段，所以刻意不提供對外的開關；長相可以請你的 Claude 照 `THEMES.md` 做一個自己的外觀包。不支援原生 Windows。
+session-office **不掛 hook、不改 Claude Code 的任何設定**（它自己的設定與記憶放在 `~/.config/session-office/`、`~/.local/state/session-office/`）：你叫它開，它才啟動一個只聽本機（127.0.0.1）的小網站，讀 Claude Code 自己記的 session 狀態畫成辦公室。頁面上會有你的對話片段，所以刻意不提供對外的開關；長相可以請你的 Claude 照 `THEMES.md` 做一個自己的外觀包。不支援原生 Windows。
 
 ---
 
