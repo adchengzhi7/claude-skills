@@ -28,6 +28,8 @@ declare module 'claude-code' {
       isHidden: boolean
       detail: Detail | null
       limits: Limit[]
+      // 自動整理的門檻；at 是 null 表示 Claude Code 沒給（例如關掉自動整理）
+      compact: { window: number; at: number | null } | null
     }
   }
 }

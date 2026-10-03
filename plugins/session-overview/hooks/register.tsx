@@ -1,5 +1,12 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, SessionContextUsage, SessionCost, SessionRateLimit } from 'claude-code'
+import type {
+  EngineInterface,
+  Register,
+  SessionContextUsage,
+  SessionCost,
+  SessionRateLimit,
+  UiOpenResult,
+} from 'claude-code'
 
 import {
   bar,
@@ -47,8 +54,8 @@ const syncAgents = async ($: EngineInterface): Promise<void> => {
   await update($, clock, () => now)
 }
 
-const openPane = async ($: EngineInterface): Promise<boolean> =>
-  (await $.ui.open({ id: PANE, title: '總覽', columns: 60 })).isPlaced
+const openPane = ($: EngineInterface): Promise<UiOpenResult> =>
+  $.ui.open({ id: PANE, title: '總覽', columns: 60 })
 
 const isOpen = async ($: EngineInterface): Promise<boolean> =>
   (await $.ui.panes()).some(pane => pane.id === PANE)
@@ -66,6 +73,8 @@ export const register: Register = on => {
       name: 'overview',
       description: '總覽面板：對話空間、花費、額度、正在跑的助手（加 off 關掉）',
       argumentHint: '[off]',
+      // 回合進行中也能打：最想看「助手是不是卡住」的時候就是回合跑到一半
+      immediate: true,
     })
     // 讓 Claude 自己能開關面板、回報有沒有開成功（人說「打開」時不用自己打指令）
     await $.tool.register({
@@ -78,22 +87,25 @@ export const register: Register = on => {
         required: ['action'],
       },
     })
-    const now = await $.session.usage()
-    await recordUsage($, now.context, now.rateLimits, now.cost)
-    await syncAgents($)
+    // 計時器先起來：下面的讀取就算失敗，面板之後還是會自己更新
     $.clock.every(TICK_MS, () => {
       tick($).catch((error: unknown) => {
         $.ui.log(`session-overview: 更新面板失敗：${String(error)}`, { to: 'debug' })
       })
     })
+    const now = await $.session.usage()
+    await recordUsage($, now.context, now.rateLimits, now.cost)
+    await syncAgents($)
 
     // 預設不自己打開；這個 session 開過（還沒被關掉）的話，重新載入時開回來。
     // 不等它畫完，免得卡住 session 開場；視窗太窄放不下就講一聲
     if (await read($, wanted)) {
       openPane($)
-        .then(isPlaced => {
-          if (!isPlaced) {
-            $.ui.toast('總覽面板放不下（視窗不夠寬）。打 /overview 可以直接打開。', { timeoutMs: 8000 })
+        .then(opened => {
+          if (!opened.isPlaced) {
+            $.ui.toast(`總覽面板放不下，打 /overview 可以直接打開。（${opened.reason}）`, {
+              timeoutMs: 8000,
+            })
           }
         })
         .catch((error: unknown) => {
@@ -104,10 +116,23 @@ export const register: Register = on => {
     return next(e)
   })
 
-  // 面板被關掉＝不想看，之後重新載入不要再自己跳出來；重新載入本身造成的關閉（unload）不算
+  // 面板被關掉＝不想看，之後重新載入不要再自己跳出來；重新載入本身造成的關閉（unload）不算。
+  // 等真的關成功才記，免得別人擋下這次關閉、面板還開著卻被記成不想看
   on('ui.close', async ($, e, next) => {
+    const result = await next(e)
+
     if (e.id === PANE && e.origin.kind !== 'unload') {
       await update($, wanted, () => false)
+    }
+
+    return result
+  })
+
+  // /clear 或換到另一段對話之後，舊的用量和助手清單不再成立
+  on('session.end', async ($, e, next) => {
+    if (e.reason === 'clear' || e.reason === 'resume') {
+      await update($, usage, () => null)
+      await update($, agents, () => [])
     }
 
     return next(e)
@@ -137,7 +162,7 @@ export const register: Register = on => {
 
     if (id !== undefined) {
       const now = await $.clock.now()
-      await update($, agents, known => ended(known, id, now))
+      await update($, agents, known => ended(known, id, now, e.reason))
       await update($, clock, () => now)
     }
 
@@ -149,10 +174,17 @@ export const register: Register = on => {
 
     if (action === 'open') {
       await update($, wanted, () => true)
-      const isPlaced = await openPane($)
+      const opened = await openPane($)
       await syncAgents($)
 
-      return { result: JSON.stringify({ action, isPlaced, isOpen: await isOpen($) }) }
+      return {
+        result: JSON.stringify({
+          action,
+          isPlaced: opened.isPlaced,
+          isOpen: await isOpen($),
+          ...(opened.isPlaced ? {} : { reason: opened.reason }),
+        }),
+      }
     }
 
     if (action === 'close') {
@@ -177,10 +209,10 @@ export const register: Register = on => {
     }
 
     await update($, wanted, () => true)
-    await openPane($)
+    const opened = await openPane($)
     await syncAgents($)
 
-    return { text: '已打開總覽面板。' }
+    return { text: opened.isPlaced ? '已打開總覽面板。' : `總覽面板放不下：${opened.reason}` }
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
@@ -196,7 +228,7 @@ export const register: Register = on => {
         <Box width={12}>
           <Text dimColor>{label}</Text>
         </Box>
-        <Box width={9}>
+        <Box width={11}>
           <Text bold {...(percent === null ? {} : tintOf(percent))}>
             {value}
           </Text>
@@ -232,7 +264,9 @@ export const register: Register = on => {
             <Box width={20}>
               <Text wrap="truncate-end">{one.label}</Text>
             </Box>
-            <Text>{one.startedAt === null ? '在跑' : `已跑 ${span(now - one.startedAt)}`}</Text>
+            <Text>
+              {one.startedAt === null || now <= 0 ? '在跑' : `已跑 ${span(now - one.startedAt)}`}
+            </Text>
             <Text dimColor wrap="truncate-end">{`  ${one.task}`}</Text>
           </Box>
         ))}

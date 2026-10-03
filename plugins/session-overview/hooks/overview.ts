@@ -31,7 +31,8 @@ export const bar = (percent: number, width: number): string => {
 }
 
 export const short = (tokens: number): string => {
-  if (tokens >= 1_000_000) {
+  // 999.5k 以上四捨五入就是 1000k，直接當 1M 顯示
+  if (tokens >= 999_500) {
     return `${(tokens / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
   }
 
@@ -71,8 +72,11 @@ const STATUS: Readonly<Record<string, string>> = {
 
 export const statusLabel = (status: string): string => STATUS[status] ?? status
 
+// now 是 0＝還沒對過時間，這時不印倒數（不然會印出「兩萬天後重置」）
 export const resetText = (limit: OverviewLimit, now: number): string =>
-  limit.resetsAt === null || limit.resetsAt <= now ? '' : `${span(limit.resetsAt - now)}後重置`
+  now <= 0 || limit.resetsAt === null || limit.resetsAt <= now
+    ? ''
+    : `${span(limit.resetsAt - now)}後重置`
 
 export const toLimit = (one: { kind: string; percentUsed: number; resetsAt?: string }): OverviewLimit => {
   const at = one.resetsAt === undefined ? Number.NaN : Date.parse(one.resetsAt)
@@ -97,7 +101,8 @@ const trim = (agents: readonly OverviewAgent[]): OverviewAgent[] => {
   return [...running, ...ended]
 }
 
-// 把引擎給的清單併進我們記得的：開始時間沿用舊的，剛從「在跑」變成別的就記下結束時間
+// 把引擎給的清單併進我們記得的：開始時間只沿用自己記到的（沒記到就是 null，不拿「第一次看到」充數），
+// 剛從「在跑」變成別的就記下結束時間
 export const mergeAgents = (
   known: readonly OverviewAgent[],
   listed: readonly Listed[],
@@ -114,7 +119,7 @@ export const mergeAgents = (
       label: one.name ?? one.type,
       task: one.description,
       status: one.status,
-      startedAt: old?.startedAt ?? (running ? now : null),
+      startedAt: old?.startedAt ?? null,
       endedAt: running ? null : (old?.endedAt ?? (old !== undefined && isRunning(old) ? now : null)),
     }
   })
@@ -132,9 +137,23 @@ export const started = (
     { ...agent, status: 'running', startedAt: now, endedAt: null },
   ])
 
-export const ended = (known: readonly OverviewAgent[], id: string, now: number): OverviewAgent[] =>
+// 回合怎麼結束的 → 助手的狀態：正常回答算完成，被中斷算已停止，其餘算失敗
+export const statusOf = (reason: string): string => {
+  if (reason === 'answer') {
+    return 'completed'
+  }
+
+  return reason === 'aborted' ? 'killed' : 'failed'
+}
+
+export const ended = (
+  known: readonly OverviewAgent[],
+  id: string,
+  now: number,
+  reason: string,
+): OverviewAgent[] =>
   trim(
     known.map(one =>
-      one.id === id && isRunning(one) ? { ...one, status: 'completed', endedAt: now } : one,
+      one.id === id && isRunning(one) ? { ...one, status: statusOf(reason), endedAt: now } : one,
     ),
   )

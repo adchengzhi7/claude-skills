@@ -1,8 +1,8 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, SessionContextUsage } from 'claude-code'
+import type { EngineInterface, Register, SessionContextUsage, UiOpenResult } from 'claude-code'
 
 import type { Detail } from '../types'
-import { bar, labelOf, levelOf, limitLabel, pushReading, short, turnsLeft } from './weather'
+import { alertStep, bar, labelOf, levelOf, limitLabel, pushReading, short, turnsLeft } from './weather'
 
 const PANE = 'context-weather'
 const HOW_BACK = '打 /context-weather 可以叫回來'
@@ -13,6 +13,10 @@ const alerted = atom({ plugin: 'context-weather', key: 'alerted' } as const, 0)
 const isHidden = atom({ plugin: 'context-weather', key: 'isHidden' } as const, false)
 const detail = atom({ plugin: 'context-weather', key: 'detail' } as const, null)
 const limits = atom({ plugin: 'context-weather', key: 'limits' } as const, [])
+const compact = atom({ plugin: 'context-weather', key: 'compact' } as const, null)
+
+const finite = (value: number | undefined): number | null =>
+  value !== undefined && Number.isFinite(value) ? value : null
 
 const refreshDetail = async ($: EngineInterface): Promise<void> => {
   const usage = await $.session.usage({ breakdown: 'summary' })
@@ -33,36 +37,70 @@ const refreshDetail = async ($: EngineInterface): Promise<void> => {
     compactAt: breakdown.autoCompactThreshold ?? null,
   }
   await update($, detail, () => next)
+  await update($, compact, () => ({ window: usage.context.window, at: next.compactAt }))
 }
 
-const record = async ($: EngineInterface, context: SessionContextUsage): Promise<void> => {
-  const tokens = context.tokens ?? null
-  const percent = context.percent ?? null
-  await update($, reading, () => ({ tokens, window: context.window, percent }))
-  await update($, history, list => pushReading(list, tokens))
-}
+// 自動整理的門檻（本地估算，不發請求）：載入時問一次，之後視窗大小變了才再問。
+// 問不到就當沒有，預估改算到視窗上限
+const learnCompact = async ($: EngineInterface, window: number, isFresh: boolean): Promise<void> => {
+  const known = await read($, compact)
 
-// 只在「變更糟」的那一刻提醒一次；降回去（整理過）就重新武裝
-const warn = async ($: EngineInterface, percent: number): Promise<void> => {
-  const level = levelOf(percent)
-  const before = await read($, alerted)
-
-  if (level.alert === before) {
+  if (!isFresh && known !== null && known.window === window) {
     return
   }
 
-  await update($, alerted, () => level.alert)
+  try {
+    const usage = await $.session.usage({ breakdown: 'summary' })
+    const at = usage.context.breakdown?.autoCompactThreshold ?? null
+    await update($, compact, () => ({ window, at }))
+  } catch (error: unknown) {
+    $.ui.log(`context-weather: 讀不到自動整理門檻：${String(error)}`, { to: 'debug' })
+  }
+}
 
-  if (level.alert > before) {
+const record = async (
+  $: EngineInterface,
+  context: SessionContextUsage,
+  isFresh = false,
+): Promise<void> => {
+  const tokens = finite(context.tokens)
+  const percent = finite(context.percent)
+  await update($, reading, () => ({ tokens, window: context.window, percent }))
+  await update($, history, list => pushReading(list, tokens))
+  await learnCompact($, context.window, isFresh)
+}
+
+// 只在「變更糟」的那一刻提醒一次；明顯降回去（整理過）才重新武裝
+const warn = async ($: EngineInterface, percent: number): Promise<void> => {
+  const before = await read($, alerted)
+  const step = alertStep(before, percent)
+
+  if (step.alerted !== before) {
+    await update($, alerted, () => step.alerted)
+  }
+
+  if (step.isNew) {
+    const level = levelOf(percent)
     $.ui.toast(`對話空間用到 ${percent}%（${level.name}）：${level.advice}`, {
       timeoutMs: 8000,
     })
   }
 }
 
-const openDetail = async ($: EngineInterface): Promise<void> => {
-  await $.ui.open({ id: PANE, title: '對話空間明細', columns: 56 })
+const openDetail = async ($: EngineInterface): Promise<UiOpenResult> => {
+  const opened = await $.ui.open({ id: PANE, title: '對話空間明細', columns: 60 })
   await refreshDetail($)
+
+  return opened
+}
+
+// 按鈕沒有地方回話，放不下就用提醒講
+const showDetail = async ($: EngineInterface): Promise<void> => {
+  const opened = await openDetail($)
+
+  if (!opened.isPlaced) {
+    $.ui.toast(`明細放不下：${opened.reason}`)
+  }
 }
 
 const hide = async ($: EngineInterface): Promise<void> => {
@@ -76,9 +114,10 @@ export const register: Register = on => {
       name: 'context-weather',
       description: '對話空間用量：打開明細（加 off 收起上方那一列）',
       argumentHint: '[off]',
+      immediate: true,
     })
     const usage = await $.session.usage()
-    await record($, usage.context)
+    await record($, usage.context, true)
     await update($, limits, () =>
       usage.rateLimits.map(one => ({ kind: one.kind, percentUsed: one.percentUsed })),
     )
@@ -92,8 +131,10 @@ export const register: Register = on => {
       e.rateLimits.map(one => ({ kind: one.kind, percentUsed: one.percentUsed })),
     )
 
-    if (e.context.percent !== undefined) {
-      await warn($, e.context.percent)
+    const percent = finite(e.context.percent)
+
+    if (percent !== null) {
+      await warn($, percent)
     }
 
     if ((await $.ui.panes()).some(pane => pane.id === PANE)) {
@@ -103,9 +144,9 @@ export const register: Register = on => {
     return next(e)
   })
 
-  // /clear 之後舊數字不再成立，等新對話的第一次回應再顯示
+  // /clear 或換到另一段對話之後舊數字不再成立，等第一次回應再顯示
   on('session.end', async ($, e, next) => {
-    if (e.reason === 'clear') {
+    if (e.reason === 'clear' || e.reason === 'resume') {
       await update($, reading, () => null)
       await update($, history, () => [])
       await update($, detail, () => null)
@@ -124,9 +165,9 @@ export const register: Register = on => {
     }
 
     await update($, isHidden, () => false)
-    await openDetail($)
+    const opened = await openDetail($)
 
-    return { text: '已打開對話空間明細。' }
+    return { text: opened.isPlaced ? '已打開對話空間明細。' : `明細放不下：${opened.reason}` }
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -151,7 +192,8 @@ export const register: Register = on => {
     const level = levelOf(now.percent)
     const tint = level.color === null ? {} : { color: level.color }
     const width = columns >= 120 ? 20 : columns >= 80 ? 10 : 0
-    const left = turnsLeft(await read($, history), now.window)
+    const ceiling = (await read($, compact))?.at ?? now.window
+    const left = turnsLeft(await read($, history), ceiling)
     const forecast =
       left === null ? '' : `，照最近的速度約還能 ${left > 99 ? '99+' : left} 回合`
 
@@ -172,7 +214,7 @@ export const register: Register = on => {
           </Text>
         )}
         <Text>{'  '}</Text>
-        <Button key="detail" label="明細" onPress={() => openDetail($)} />
+        <Button key="detail" label="明細" onPress={() => showDetail($)} />
         <Text> </Text>
         <Button key="hide" label="收起" dimColor onPress={() => hide($)} />
       </Box>
@@ -196,7 +238,7 @@ export const register: Register = on => {
       .toSorted((a, b) => b.tokens - a.tokens)
     const rest = now.rows.filter(row => row.kind !== 'used' && row.tokens > 0)
     const top = used[0]?.tokens ?? 1
-    const room = Math.max(4, Math.min(24, e.props.bodyColumns - 32))
+    const room = Math.max(4, Math.min(24, e.props.bodyColumns - 38))
     const percent = now.max > 0 ? Math.round((now.total / now.max) * 100) : 0
     const level = levelOf(percent)
     const quota = (await read($, limits))
@@ -213,7 +255,7 @@ export const register: Register = on => {
         <Text dimColor>佔空間的東西（由大到小，估算值）</Text>
         {used.map(row => (
           <Box>
-            <Box width={22}>
+            <Box width={28}>
               <Text>{labelOf(row)}</Text>
             </Box>
             <Box width={7}>
@@ -227,7 +269,7 @@ export const register: Register = on => {
         <Text> </Text>
         {rest.map(row => (
           <Box>
-            <Box width={22}>
+            <Box width={28}>
               <Text dimColor>{labelOf(row)}</Text>
             </Box>
             <Text dimColor>{short(row.tokens)}</Text>

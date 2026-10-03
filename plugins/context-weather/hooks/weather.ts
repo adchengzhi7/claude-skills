@@ -22,6 +22,24 @@ const FAIR: Level = { from: 0, name: '晴', advice: '空間很夠', color: 'succ
 export const levelOf = (percent: number): Level =>
   LEVELS.find(level => percent >= level.from) ?? FAIR
 
+// 降到門檻以下這麼多個百分點，才算真的離開那一級；在門檻邊緣來回不重複提醒
+const REARM_GAP = 5
+
+// 回傳新的「已提醒到哪一級」，以及這次要不要跳提醒
+export const alertStep = (before: number, percent: number): { alerted: number; isNew: boolean } => {
+  const level = levelOf(percent)
+
+  if (level.alert > before) {
+    return { alerted: level.alert, isNew: true }
+  }
+
+  if (level.alert < before && percent <= before - REARM_GAP) {
+    return { alerted: level.alert, isNew: false }
+  }
+
+  return { alerted: before, isNew: false }
+}
+
 export const bar = (percent: number, width: number): string => {
   const share = Math.min(100, Math.max(0, percent)) / 100
   const filled = percent > 0 ? Math.max(1, Math.round(share * width)) : 0
@@ -30,7 +48,8 @@ export const bar = (percent: number, width: number): string => {
 }
 
 export const short = (tokens: number): string => {
-  if (tokens >= 1_000_000) {
+  // 999.5k 以上四捨五入就是 1000k，直接當 1M 顯示
+  if (tokens >= 999_500) {
     return `${(tokens / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
   }
 
@@ -60,8 +79,8 @@ export const pushReading = (list: readonly number[], tokens: number | null): num
   return [...list, tokens].slice(-12)
 }
 
-// 照最近幾回合的成長速度，離視窗上限還有幾回合；資料不夠就不猜（null）
-export const turnsLeft = (list: readonly number[], window: number): number | null => {
+// 照最近幾回合的成長速度，離 ceiling（自動整理門檻，沒有就用視窗上限）還有幾回合；資料不夠就不猜（null）
+export const turnsLeft = (list: readonly number[], ceiling: number): number | null => {
   const recent = list.slice(-6)
   const last = recent[recent.length - 1]
 
@@ -75,7 +94,7 @@ export const turnsLeft = (list: readonly number[], window: number): number | nul
     return null
   }
 
-  return Math.max(0, Math.floor((window - last) / growth))
+  return Math.max(0, Math.floor((ceiling - last) / growth))
 }
 
 const NAMES: Readonly<Record<string, string>> = {

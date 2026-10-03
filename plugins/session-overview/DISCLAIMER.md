@@ -8,7 +8,7 @@
 
 1. Mod 跑在 Claude Code 自己的程序裡。這一個只讀用量與子 agent 清單、畫面板（見 README「它碰得到什麼」），但**裝之前請自己看過程式碼**，不要只信說明。
 2. 它會註冊一個 Claude 可以呼叫的工具 `mcp__session-overview__panel`，功能只有開、關、查面板狀態。
-3. Mods 仍是 early access，Claude Code 更新後這個 mod 可能需要跟著改；壞掉時 Claude Code 會略過它，不影響你正常使用。
+3. Mods 仍是 early access，Claude Code 更新後這個 mod 可能需要跟著改；壞掉時 Claude Code 會略過它，通常不影響你正常使用。
 4. 畫面上的花費、額度、用量都來自 Claude Code 回報的數字，**僅供參考**，不是計費依據。
 5. **無擔保**：依 MIT 授權，本軟體「按現狀」提供，作者不對任何使用後果負責。
 
