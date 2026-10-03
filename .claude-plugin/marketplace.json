@@ -205,6 +205,34 @@
       ]
     },
     {
+      "name": "context-weather",
+      "source": "./plugins/context-weather",
+      "description": "Claude Code mod：輸入框上方多一列，用天氣顯示這段對話的空間還剩多少；快滿時提醒一次，可展開看是誰在佔空間。",
+      "version": "0.1.0",
+      "category": "developer-tools",
+      "keywords": [
+        "mod",
+        "context-window",
+        "tokens",
+        "statusline",
+        "claude-code"
+      ]
+    },
+    {
+      "name": "session-overview",
+      "source": "./plugins/session-overview",
+      "description": "Claude Code mod：打 /overview，旁邊開一個面板，一次看對話空間、花費、額度（含多久後重置）、正在跑的子 agent。",
+      "version": "0.1.0",
+      "category": "developer-tools",
+      "keywords": [
+        "mod",
+        "dashboard",
+        "rate-limits",
+        "subagent",
+        "claude-code"
+      ]
+    },
+    {
       "name": "session-office",
       "source": "./plugins/session-office",
       "description": "把這台電腦上每個 Claude Code session 畫成一間辦公室：誰在等你、誰在跑、誰做完、誰出狀況，點卡片切到那個 tmux 視窗。長相可以換成自己的外觀包。只聽本機、只用 Python 內建功能（macOS / Linux）",
