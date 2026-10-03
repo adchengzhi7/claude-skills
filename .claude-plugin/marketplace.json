@@ -203,6 +203,20 @@
         "hooks",
         "claude-code"
       ]
+    },
+    {
+      "name": "session-office",
+      "source": "./plugins/session-office",
+      "description": "把這台電腦上每個 Claude Code session 畫成一間辦公室：誰在等你、誰在跑、誰做完、誰出狀況，點卡片切到那個 tmux 視窗。長相可以換成自己的外觀包。只聽本機、只用 Python 內建功能（macOS / Linux）",
+      "version": "0.1.0",
+      "category": "developer-tools",
+      "keywords": [
+        "sessions",
+        "dashboard",
+        "tmux",
+        "themes",
+        "claude-code"
+      ]
     }
   ]
 }

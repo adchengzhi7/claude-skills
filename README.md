@@ -111,6 +111,7 @@ Claude 會：
 | **[tune-flow](./plugins/tune-flow/)** v1.1 | 每月一次工作流程健檢：從實際紀錄抓摩擦、三方對立辯論、停下等人拍板、決策留檔 | 跨平台 |
 | **[tailscale-preview-site](./plugins/tailscale-preview-site/)** v1.0 | 自架私人預覽站：HTML 報告發佈到只有自己 Tailscale 網路連得到的站，手機平板直接看、不需登入、不經第三方 | macOS / Linux |
 | **[model-dispatch](./plugins/model-dispatch/)** v1.0 | 讓子 agent 自動跑在對的模型檔位：專才綁死模型、萬用 agent 沒選模型就被 hook 擋下、派工表範本、每週對帳提醒 | 跨平台（需 python3） |
+| **[session-office](./plugins/session-office/)** v0.1 | 把每個 Claude Code session 畫成一間辦公室：誰在等你、誰在跑、誰出狀況，點卡片切 tmux 視窗；長相可以換成自己的外觀包 | macOS / Linux（需 python3） |
 | _（更多會陸續上架）_ | | |
 
 收據類 plugin 都做月份分檔（`~/Downloads/.../2026-04/...`）方便月報帳整批拉；meeting-notes 是純 prompt 能力、免裝相依套件。
@@ -120,6 +121,8 @@ mockup-demo / html-note / tune-flow 這三支是**純 prompt 能力**（沒有�
 tailscale-preview-site 需要**一台常開的機器**（Mac mini / NAS / 舊筆電）與 Tailscale 帳號——沒有的話這支幫不上忙，先看 SETUP.md 的條件再裝。它和 html-note 是一組：html-note 講「什麼該出成網頁」，這支講「網頁放哪裡」。
 
 model-dispatch 裝了會掛兩支 hook（一支在你派萬用 agent 又沒帶 model 時擋下、一支每週提醒對帳），**不會自動改你的設定**——派工表要你自己貼進 CLAUDE.md、agent 的 model 要你自己寫進 frontmatter，範本都在 `templates/`。
+
+session-office **不掛 hook、不改任何設定**：你叫它開，它才啟動一個只聽本機（127.0.0.1）的小網站，讀 Claude Code 自己記的 session 狀態畫成辦公室。頁面上會有你的對話片段，所以刻意不提供對外的開關；長相可以請你的 Claude 照 `THEMES.md` 做一個自己的外觀包。不支援原生 Windows。
 
 ---
 

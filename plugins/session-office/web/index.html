@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<!-- Session 辦公室的骨架。這個檔和 logic.js／app.js／base.css 是「共用引擎」，所有外觀包共用、更新時會被換掉；
+     要改長相請做外觀包（themes/<名字>/theme.css＋theme.js，見 THEMES.md），不要改這裡。 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Session 辦公室</title>
+<link rel="stylesheet" href="/web/base.css">
+<link rel="stylesheet" id="themeCss">
+</head>
+<body>
+<div class="wrap" id="office">
+  <header>
+    <h1 id="title">Session 辦公室</h1>
+    <span class="meta" id="meta">讀取中⋯</span>
+    <label class="themepick">外觀 <select id="themeSel" aria-label="外觀"></select></label>
+  </header>
+  <div class="urgent" id="urgent" role="alert"></div>
+  <details class="help" id="help">
+    <summary>這頁怎麼看</summary>
+    <div id="helpBody"></div>
+  </details>
+  <div class="chips" id="chips"></div>
+  <div class="floor" id="floor"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="jumpfx" id="jumpfx" role="status" aria-live="assertive"><div class="jf-box"><div class="jf-art"></div><div class="jf-t1"></div><div class="jf-t2"></div></div></div>
+<script src="/web/logic.js"></script>
+<script src="/web/app.js"></script>
+</body>
+</html>

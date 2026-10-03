@@ -1,0 +1,129 @@
+/* 貓咪咖啡廳：暖色、圓角、三個房間並排成三欄，卡片是「左邊一隻貓、右邊文字」的橫式。
+   跟像素辦公室用的是同一份畫面骨架（同樣的 class），只是排法和顏色不同——換外觀不用動判斷邏輯。 */
+:root {
+  --bg: #fbf3e4; --ink: #4a3b2a; --muted: #9a8468; --card: #fffdf8; --line: #ead9bd;
+  --wait: #f08c3a; --run: #6c8ebf; --done: #8fbf7f; --er: #e06666; --ice: #8fc4e8; --mark: #f06595;
+}
+html, body { background: var(--bg); color: var(--ink); font: 15px/1.5 ui-rounded, "SF Pro Rounded", "PingFang TC", "Noto Sans TC", sans-serif; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: max(20px, env(safe-area-inset-top)) 16px 60px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 14px; }
+h1 { font-size: 22px; margin: 0; }
+.meta { color: var(--muted); font-size: 13px; }
+.meta.stale { color: var(--er); font-weight: 700; }
+.themepick { margin-left: auto; color: var(--muted); font-size: 13px; }
+.themepick select { font: inherit; font-size: 13px; color: var(--ink); background: var(--card); border: 2px solid var(--line); border-radius: 999px; padding: 3px 10px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.chip { font: inherit; font-size: 13px; padding: 3px 12px; border-radius: 999px; cursor: pointer; border: 2px solid var(--line);
+  background: var(--card); color: var(--ink); display: inline-flex; gap: 6px; align-items: center; }
+.chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); display: inline-block; }
+.chip.on { border-color: var(--c); background: var(--c); color: #fff; }
+.chip.on i { background: #fff; }
+.chip svg { width: 12px; height: 10px; }
+
+/* 三個房間並排 */
+.floor { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.floor.dim { opacity: .5; filter: grayscale(.5); }
+.room { --tone: var(--line); background: var(--card); border-radius: 18px; padding: 12px; border-top: 6px solid var(--tone); box-shadow: 0 2px 0 var(--line); }
+.room.meet { --tone: var(--wait); } .room.work { --tone: var(--run); } .room.rest { --tone: var(--done); }
+.room.er { --tone: var(--er); grid-column: 1 / -1; }
+.room.er.calm { border-top-width: 2px; padding: 8px 12px; color: var(--muted); }
+.door { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-weight: 700; margin-bottom: 10px; }
+.door small { color: var(--muted); font-weight: 400; font-size: 12px; }
+button.door { width: 100%; background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: inherit; cursor: pointer; text-align: left; }
+.room.er.calm .door, .room.er:not(.open) .door { margin-bottom: 0; }
+.room .empty { color: var(--muted); font-size: 13px; padding: 18px 4px; text-align: center; }
+.desks { display: grid; gap: 10px; }
+.room.er .desks, .freezer .desks { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-top: 10px; }
+
+/* 一張卡：左貓右字 */
+.desk { position: relative; display: grid; grid-template-columns: 76px minmax(0, 1fr); column-gap: 10px; align-items: start;
+  background: var(--bg); border: 2px solid transparent; border-radius: 14px; padding: 10px; }
+.desk:hover { border-color: var(--line); }
+.desk.noclick:hover { border-color: transparent; }
+.desk.er { border-color: var(--er); }
+.desk.marked { border-color: var(--mark); }
+.desk.frozen { background: #eaf4fb; }
+.desk.expiring { border-color: var(--wait); animation: nudge 1.2s ease-in-out infinite; }
+@keyframes nudge { 50% { box-shadow: 0 0 0 5px rgba(240, 140, 58, .25); } }
+.desk svg.me { grid-column: 1; grid-row: 1 / span 3; width: 76px; height: auto; shape-rendering: crispEdges; }
+.plate { grid-column: 2; grid-row: 1; font-weight: 700; padding: 0 44px 0 7px; border-left: 5px solid var(--c); border-radius: 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bubble { grid-column: 2; grid-row: 2; margin-top: 5px; font-size: 13px; line-height: 1.4; background: var(--card); border-radius: 10px; padding: 4px 8px 0; border-bottom: 4px solid transparent;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bubble.wait { background: #ffe8cc; color: #7a3e00; }
+.bubble.er { background: #ffe3e3; color: #8a1c1c; }
+.nick { grid-column: 2; grid-row: 3; margin-top: 3px; font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.winno { position: absolute; right: 8px; top: 9px; font-size: 11px; color: var(--muted); background: var(--card); border-radius: 999px; padding: 0 7px; }
+.crew, .ctx, .cache, .ctxwarn { grid-column: 1 / -1; }
+.crew { display: flex; gap: 4px; align-items: center; margin-top: 8px; }
+.crew svg { animation: swim 1s ease-in-out infinite; }
+.crew svg:nth-child(2) { animation-delay: .2s; } .crew svg:nth-child(3) { animation-delay: .4s; }
+.crew b { font-size: 11px; color: var(--muted); }
+@keyframes swim { 50% { transform: translateX(3px); } }
+.marks { position: absolute; left: 6px; top: 6px; }
+.marks svg { width: 12px; height: 10px; display: none; }
+.marks svg:first-child { display: block; }
+/* context：橫的一條 */
+.ctx { height: 5px; margin-top: 8px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.ctx i { display: block; height: 100%; width: var(--pct); background: var(--done); border-radius: 999px; }
+.ctx i.low { background: var(--wait); }
+.cache, .ctxwarn { margin-top: 6px; font-size: 12px; border-radius: 999px; padding: 2px 10px; text-align: center; }
+.cache.ok { background: #e6f4dc; color: #3d6b2a; }
+.cache.soon { background: #fff0c2; color: #8a5a00; font-weight: 700; }
+.cache.gone { background: #dcebf6; color: #3b5a73; }
+.ctxwarn { background: #fff0c2; color: #8a5a00; }
+.ctxwarn.bad { background: #ffe3e3; color: #8a1c1c; font-weight: 700; }
+
+/* 貓的動作 */
+.typing .arm { animation: tap .3s steps(2) infinite; }
+@keyframes tap { 50% { transform: translateY(-.6px); } }
+.waving .hand { animation: wave .5s steps(2) infinite; }
+@keyframes wave { 50% { transform: translateY(-1px); } }
+.bang { animation: wave .6s steps(2) infinite; }
+.glow { animation: glow 1.2s steps(2) infinite; }
+@keyframes glow { 50% { opacity: .5; } }
+.zz { animation: glow 2s ease-in-out infinite; }
+.snow { animation: glow 1.6s steps(2) infinite; }
+
+/* 冬眠區與回家了 */
+.freezer { grid-column: 1 / -1; background: #eaf4fb; border-radius: 18px; padding: 10px 12px; border-top: 6px solid var(--ice); }
+.freezer .fz-door { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; width: 100%; background: none; border: 0; padding: 0;
+  font: inherit; font-weight: 700; color: #3b5a73; cursor: pointer; text-align: left; }
+.freezer .fz-door small { color: #6f93ad; font-weight: 400; font-size: 12px; }
+.freezer .desk.frozen { background: var(--card); }
+.clock { grid-column: 1 / -1; border: 2px dashed var(--line); border-radius: 18px; padding: 10px 12px; color: var(--muted); font-size: 13px; cursor: pointer; }
+.clock .sleepers { margin-top: 8px; gap: 6px; }
+.sleeper { border-left: 4px solid var(--c); background: var(--card); padding: 2px 10px; border-radius: 999px; font-size: 12px; color: var(--ink); }
+
+/* 說明區 */
+.help { background: var(--card); border-radius: 18px; padding: 8px 14px; margin-bottom: 14px; font-size: 13.5px; box-shadow: 0 2px 0 var(--line); }
+.help summary { cursor: pointer; font-weight: 700; }
+.rooms-mini { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+.rooms-mini div { border-radius: 12px; padding: 8px 10px; font-size: 12.5px; background: var(--bg); color: var(--muted); }
+.rooms-mini div b { display: block; color: var(--ink); font-size: 13px; }
+.rooms-mini .m { box-shadow: inset 0 0 0 2px var(--wait); }
+.legend-list { margin: 0; padding-left: 20px; color: var(--muted); }
+.legend-list li { margin: 0 0 6px; }
+.legend-list b { color: var(--ink); }
+
+/* 快過期提醒 */
+.urgent { margin: 0 0 14px; padding: 10px 14px; background: #fff0c2; border: 3px solid var(--wait); border-radius: 18px; }
+.u-title { color: #8a5a00; font-weight: 700; margin-bottom: 4px; }
+.u-row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; width: 100%; text-align: left; background: var(--card);
+  border: 0; border-radius: 12px; padding: 6px 12px; margin-top: 6px; color: var(--ink); font: inherit; cursor: pointer; }
+.u-row.crit { background: #ffe3e3; }
+.u-time { font-weight: 800; font-size: 24px; font-variant-numeric: tabular-nums; color: var(--wait); min-width: 78px; }
+.u-row.crit .u-time { color: var(--er); }
+.u-name { font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.u-cost { color: var(--muted); font-size: 13px; white-space: nowrap; }
+
+.toast { background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 999px; font-size: 14px; }
+.jumpfx { background: rgba(74, 59, 42, .7); }
+.jumpfx .jf-box { background: var(--card); color: var(--ink); border: 4px solid var(--run); border-radius: 22px; padding: 22px 26px; text-align: center; width: min(420px, calc(100vw - 32px)); }
+.jumpfx.ok .jf-box { border-color: var(--done); } .jumpfx.bad .jf-box { border-color: var(--er); }
+.jumpfx .jf-t1 { font-size: 22px; font-weight: 800; overflow-wrap: anywhere; }
+.jumpfx .jf-t2 { font-size: 14px; color: var(--muted); margin-top: 8px; overflow-wrap: anywhere; }
+
+@media (max-width: 900px) { .floor { grid-template-columns: 1fr; } .rooms-mini { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .u-row { grid-template-columns: auto 1fr; } .u-cost { grid-column: 1 / -1; } }
