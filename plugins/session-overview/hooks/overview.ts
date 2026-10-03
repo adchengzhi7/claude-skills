@@ -124,7 +124,13 @@ export const mergeAgents = (
     }
   })
 
-  return trim([...merged, ...known.filter(agent => !ids.has(agent.id))])
+  // 清單裡沒有、我們卻記得的：有開始時間的是掛勾剛記到、清單還沒跟上，留著；
+  // 沒有開始時間又在跑的只可能來自舊清單，清單沒有了就丟
+  const kept = known.filter(
+    agent => !ids.has(agent.id) && !(isRunning(agent) && agent.startedAt === null),
+  )
+
+  return trim([...merged, ...kept])
 }
 
 export const started = (

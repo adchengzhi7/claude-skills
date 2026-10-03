@@ -25,6 +25,9 @@ export const levelOf = (percent: number): Level =>
 // 降到門檻以下這麼多個百分點，才算真的離開那一級；在門檻邊緣來回不重複提醒
 const REARM_GAP = 5
 
+// 會跳提醒的門檻，由高到低
+const ALERTS: readonly number[] = LEVELS.map(level => level.alert).filter(alert => alert > 0)
+
 // 回傳新的「已提醒到哪一級」，以及這次要不要跳提醒
 export const alertStep = (before: number, percent: number): { alerted: number; isNew: boolean } => {
   const level = levelOf(percent)
@@ -33,11 +36,10 @@ export const alertStep = (before: number, percent: number): { alerted: number; i
     return { alerted: level.alert, isNew: true }
   }
 
-  if (level.alert < before && percent <= before - REARM_GAP) {
-    return { alerted: level.alert, isNew: false }
-  }
+  // 一級一級退：提醒過的級別裡，還沒降到它門檻以下 REARM_GAP 的最高那一級，就算還在那一級
+  const held = ALERTS.find(alert => alert <= before && percent > alert - REARM_GAP) ?? 0
 
-  return { alerted: before, isNew: false }
+  return { alerted: held, isNew: false }
 }
 
 export const bar = (percent: number, width: number): string => {

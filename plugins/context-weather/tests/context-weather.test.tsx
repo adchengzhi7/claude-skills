@@ -57,21 +57,39 @@ const breakdown = (compactAt: number | null): SessionContextBreakdown => ({
   apiUsage: null,
 })
 
-// 站在引擎的位置回答 mod 會問的事；回傳的函式讀出到目前為止跳過的提醒
-const world = (on: On, compactAt: number | null = 180_000): (() => readonly string[]) => {
-  let toasts: readonly string[] = []
-  let panes: readonly string[] = []
+// 問明細時引擎怎麼回：正常給、不給（但不報錯）、直接報錯
+type Detail = 'ok' | 'absent' | 'throws'
 
-  on('session.usage', (_, e) => ({
-    value: {
-      startedAt: 0,
-      context:
-        e.breakdown === undefined
-          ? { window: WINDOW }
-          : { window: WINDOW, breakdown: breakdown(compactAt) },
-      rateLimits: [{ kind: 'five_hour', percentUsed: 23 }],
-    },
-  }))
+const REFUSED = 'no surface places panes'
+
+// 站在引擎的位置回答 mod 會問的事。compactAt 是 null＝沒有自動整理門檻；isPlaced 是 false＝介面不放面板
+const world = (on: On, { compactAt = 180_000 as number | null, isPlaced = true } = {}) => {
+  let toasts: readonly string[] = []
+  let logs: readonly string[] = []
+  let panes: readonly string[] = []
+  let detail: Detail = 'ok'
+  let asks = 0
+
+  on('session.usage', (_, e) => {
+    if (e.breakdown !== undefined) {
+      asks += 1
+
+      if (detail === 'throws') {
+        throw new Error('明細暫時拿不到')
+      }
+    }
+
+    return {
+      value: {
+        startedAt: 0,
+        context:
+          e.breakdown === undefined || detail !== 'ok'
+            ? { window: WINDOW }
+            : { window: WINDOW, breakdown: breakdown(compactAt) },
+        rateLimits: [{ kind: 'five_hour', percentUsed: 23 }],
+      },
+    }
+  })
   on('command.register', (_, e) => ({ value: { command: e.name } }))
   on('ui.toast', (_, e) => {
     toasts = [...toasts, e.text]
@@ -81,7 +99,7 @@ const world = (on: On, compactAt: number | null = 180_000): (() => readonly stri
   on('ui.open', (_, e) => {
     panes = [...panes.filter(id => id !== e.id), e.id]
 
-    return { value: { isPlaced: true } }
+    return { value: isPlaced ? { isPlaced: true } : { isPlaced: false, reason: REFUSED } }
   })
   on('ui.close', (_, e) => {
     panes = panes.filter(id => id !== e.id)
@@ -91,7 +109,11 @@ const world = (on: On, compactAt: number | null = 180_000): (() => readonly stri
   on('ui.panes', () => ({
     value: panes.map(id => ({ id, title: id, isShown: true, isFocused: false, isPlaced: true })),
   }))
-  on('ui.log', () => ({ value: undefined }))
+  on('ui.log', (_, e) => {
+    logs = [...logs, e.text]
+
+    return { value: undefined }
+  })
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('session.measure', (_, e) => ({ changed: e.changed }))
   on('session.end', (_, e) => ({ sessionId: e.sessionId }))
@@ -102,15 +124,22 @@ const world = (on: On, compactAt: number | null = 180_000): (() => readonly stri
     return <Text>{EMPTY}</Text>
   })
 
-  return () => toasts
+  return {
+    toasts: () => toasts,
+    logs: () => logs,
+    asks: () => asks,
+    answerDetail: (next: Detail) => {
+      detail = next
+    },
+  }
 }
 
 const start = ($: Engine) =>
   $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
 
-const measure = ($: Engine, percent: number) =>
+const measure = ($: Engine, percent: number, window = WINDOW) =>
   $.session.measure({
-    context: { tokens: (WINDOW * percent) / 100, window: WINDOW, percent },
+    context: { tokens: (WINDOW * percent) / 100, window, percent },
     rateLimits: [{ kind: 'five_hour', percentUsed: 23 }],
     changed: ['context'],
   })
@@ -123,8 +152,8 @@ const run = ($: Engine, args: string) =>
     presentation: { isFullscreen: true, columns: 160 },
   })
 
-const band = async ($: Engine) => {
-  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+const band = async ($: Engine, props: { hasSurvey?: boolean; bodyColumns?: number } = {}) => {
+  const ui = await $.ui.mount({ ...BAND, props: { ...BAND.props, ...props }, surface: 'terminal' })
   const texts = (await ui.findAll({ type: 'Text' })).map(one => one.text)
   await ui.unmount()
 
@@ -152,7 +181,7 @@ test('量到用量後，那一列顯示天氣、百分比和用量（終端機�
 })
 
 test('跨進有雨、暴雨各提醒一次；門檻邊緣來回不重複；明顯降回去後會重新提醒', async ($, on) => {
-  const toasts = world(on)
+  const { toasts } = world(on)
   await start($)
 
   await measure($, 18)
@@ -195,7 +224,7 @@ test('資料不夠不猜還能幾回合；有三次讀數後，算到自動整�
 })
 
 test('Claude Code 沒給自動整理門檻時，預估改算到上限', async ($, on) => {
-  world(on, null)
+  world(on, { compactAt: null })
   await start($)
   await measure($, 10)
   await measure($, 15)
@@ -228,7 +257,7 @@ test('按「明細」會打開明細，佔空間的由大到小排，額度也�
 })
 
 test('按「收起」那一列讓位，打指令叫回來；/context-weather off 也會收起', async ($, on) => {
-  const toasts = world(on)
+  const { toasts } = world(on)
   await start($)
   await measure($, 18)
   expect(await band($)).toContain('晴')
@@ -256,6 +285,97 @@ test('/clear 之後舊讀數不留在畫面上', async ($, on) => {
   expect(await band($)).toEqual([EMPTY])
 })
 
+test('換到另一段對話（resume）之後舊讀數也不留', async ($, on) => {
+  world(on)
+  await start($)
+  await measure($, 80)
+  expect(await band($)).toContain('有雨')
+
+  await $.session.end({ reason: 'resume', sessionId: 's1', resume: { id: 's1' } })
+  expect(await band($)).toEqual([EMPTY])
+})
+
+test('門檻只在載入和視窗大小改變時問，不是每回合問', async ($, on) => {
+  const { asks } = world(on)
+  await start($)
+  expect(asks()).toBe(1)
+
+  await measure($, 10)
+  await measure($, 15)
+  await measure($, 20)
+  expect(asks()).toBe(1)
+
+  await measure($, 21, 1_000_000)
+  expect(asks()).toBe(2)
+  await measure($, 22, 1_000_000)
+  expect(asks()).toBe(2)
+})
+
+for (const [how, logged] of [['absent', 0], ['throws', 1]] as const) {
+  test(`開場拿不到門檻（${how}）不會就此認定沒有門檻，下一回合會再問`, async ($, on) => {
+    const { asks, logs, answerDetail } = world(on)
+    answerDetail(how)
+    await start($)
+    expect(asks()).toBe(1)
+    expect(logs()).toHaveLength(logged)
+
+    answerDetail('ok')
+    await measure($, 10)
+    await measure($, 15)
+    await measure($, 20)
+    expect(asks()).toBe(2)
+    // 拿到門檻 180k → 14 回合；若被記成「沒有門檻」會是 16
+    const note = (await band($)).find(text => text.includes('空間很夠'))
+    expect(note).toBe('  空間很夠，照最近的速度約還能 14 回合')
+  })
+}
+
+test('介面不放面板時照實說，不說「已打開」', async ($, on) => {
+  const { toasts } = world(on, { isPlaced: false })
+  await start($)
+  await measure($, 18)
+
+  expect((await run($, '')).text).toBe(`明細還沒顯示：${REFUSED}`)
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  await ui.press({ key: 'detail' })
+  await ui.unmount()
+  expect(toasts().at(-1)).toBe(`明細還沒顯示：${REFUSED}`)
+})
+
+test('壞讀數（不是數字）當成沒有讀數：顯示佔位、不跳提醒', async ($, on) => {
+  const { toasts } = world(on)
+  await start($)
+  await measure($, 80)
+  expect(await band($)).toContain('有雨')
+  expect(toasts()).toHaveLength(1)
+
+  await $.session.measure({
+    context: { tokens: Number.NaN, window: WINDOW, percent: Number.NaN },
+    rateLimits: [],
+    changed: ['context'],
+  })
+  expect((await band($))[0]).toBe('對話空間  等下一次回應後才有讀數  ')
+  expect(toasts()).toHaveLength(1)
+})
+
+test('有問卷佔用那一列時讓位；視窗窄時省略長條和後面那句話', async ($, on) => {
+  world(on)
+  await start($)
+  await measure($, 18)
+
+  const wide = await band($)
+  expect(wide.some(text => text.includes('█'))).toBe(true)
+  expect(wide.some(text => text.includes('空間很夠'))).toBe(true)
+
+  expect(await band($, { hasSurvey: true })).toEqual([EMPTY])
+
+  const narrow = await band($, { bodyColumns: 70 })
+  expect(narrow).toContain('晴')
+  expect(narrow.some(text => text.includes('█'))).toBe(false)
+  expect(narrow.some(text => text.includes('空間很夠'))).toBe(false)
+})
+
 test('純計算：重新起算、不亂預估、數字寫法、提醒的緩衝', () => {
   expect(pushReading([10, 20, 30], 40)).toEqual([10, 20, 30, 40])
   expect(pushReading([10, 20, 30], 5)).toEqual([5])
@@ -274,4 +394,10 @@ test('純計算：重新起算、不亂預估、數字寫法、提醒的緩衝',
   expect(alertStep(90, 85)).toEqual({ alerted: 75, isNew: false })
   expect(alertStep(75, 72)).toEqual({ alerted: 75, isNew: false })
   expect(alertStep(75, 70)).toEqual({ alerted: 0, isNew: false })
+  // 從暴雨一次掉很多：只離開暴雨，還沒降到 70 以下就還算在有雨，回到 75 不重複跳
+  expect(alertStep(90, 72)).toEqual({ alerted: 75, isNew: false })
+  expect(alertStep(75, 75)).toEqual({ alerted: 75, isNew: false })
+  expect(alertStep(90, 70)).toEqual({ alerted: 0, isNew: false })
+  expect(alertStep(0, 95)).toEqual({ alerted: 90, isNew: true })
+  expect(alertStep(90, 99)).toEqual({ alerted: 90, isNew: false })
 })

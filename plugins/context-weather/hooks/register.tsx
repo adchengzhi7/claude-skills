@@ -50,9 +50,14 @@ const learnCompact = async ($: EngineInterface, window: number, isFresh: boolean
   }
 
   try {
-    const usage = await $.session.usage({ breakdown: 'summary' })
-    const at = usage.context.breakdown?.autoCompactThreshold ?? null
-    await update($, compact, () => ({ window, at }))
+    const found = (await $.session.usage({ breakdown: 'summary' })).context.breakdown
+
+    // 這次沒拿到明細就不記，下次量測再問；記成「沒有門檻」會讓整個 session 都不再問
+    if (found === undefined) {
+      return
+    }
+
+    await update($, compact, () => ({ window, at: found.autoCompactThreshold ?? null }))
   } catch (error: unknown) {
     $.ui.log(`context-weather: 讀不到自動整理門檻：${String(error)}`, { to: 'debug' })
   }
@@ -99,7 +104,7 @@ const showDetail = async ($: EngineInterface): Promise<void> => {
   const opened = await openDetail($)
 
   if (!opened.isPlaced) {
-    $.ui.toast(`明細放不下：${opened.reason}`)
+    $.ui.toast(`明細還沒顯示：${opened.reason}`)
   }
 }
 
@@ -167,7 +172,7 @@ export const register: Register = on => {
     await update($, isHidden, () => false)
     const opened = await openDetail($)
 
-    return { text: opened.isPlaced ? '已打開對話空間明細。' : `明細放不下：${opened.reason}` }
+    return { text: opened.isPlaced ? '已打開對話空間明細。' : `明細還沒顯示：${opened.reason}` }
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -239,7 +244,8 @@ export const register: Register = on => {
     const rest = now.rows.filter(row => row.kind !== 'used' && row.tokens > 0)
     const top = used[0]?.tokens ?? 1
     const room = Math.max(4, Math.min(24, e.props.bodyColumns - 38))
-    const percent = now.max > 0 ? Math.round((now.total / now.max) * 100) : 0
+    const share = (now.total / now.max) * 100
+    const percent = Number.isFinite(share) ? Math.round(share) : 0
     const level = levelOf(percent)
     const quota = (await read($, limits))
       .map(one => `${limitLabel(one.kind)} ${one.percentUsed}%`)

@@ -103,7 +103,7 @@ export const register: Register = on => {
       openPane($)
         .then(opened => {
           if (!opened.isPlaced) {
-            $.ui.toast(`總覽面板放不下，打 /overview 可以直接打開。（${opened.reason}）`, {
+            $.ui.toast(`總覽面板還沒顯示，打 /overview 可以直接打開。（${opened.reason}）`, {
               timeoutMs: 8000,
             })
           }
@@ -117,21 +117,23 @@ export const register: Register = on => {
   })
 
   // 面板被關掉＝不想看，之後重新載入不要再自己跳出來；重新載入本身造成的關閉（unload）不算。
-  // 等真的關成功才記，免得別人擋下這次關閉、面板還開著卻被記成不想看
+  // 關完再看面板是不是真的不在了才記，免得別人擋下這次關閉、面板還開著卻被記成不想看
   on('ui.close', async ($, e, next) => {
     const result = await next(e)
 
-    if (e.id === PANE && e.origin.kind !== 'unload') {
+    if (e.id === PANE && e.origin.kind !== 'unload' && !(await isOpen($))) {
       await update($, wanted, () => false)
     }
 
     return result
   })
 
-  // /clear 或換到另一段對話之後，舊的用量和助手清單不再成立
+  // /clear 或換到另一段對話之後，舊的對話空間、花費和助手清單不再成立；額度是帳號的，留著
   on('session.end', async ($, e, next) => {
     if (e.reason === 'clear' || e.reason === 'resume') {
-      await update($, usage, () => null)
+      await update($, usage, old =>
+        old === null ? null : { ...old, tokens: null, percent: null, costUsd: null },
+      )
       await update($, agents, () => [])
     }
 
@@ -212,7 +214,7 @@ export const register: Register = on => {
     const opened = await openPane($)
     await syncAgents($)
 
-    return { text: opened.isPlaced ? '已打開總覽面板。' : `總覽面板放不下：${opened.reason}` }
+    return { text: opened.isPlaced ? '已打開總覽面板。' : `總覽面板還沒顯示：${opened.reason}` }
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {

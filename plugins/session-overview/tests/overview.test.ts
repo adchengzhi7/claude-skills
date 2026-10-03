@@ -52,11 +52,19 @@ const CLOSER: Plugin = {
   },
 }
 
-// 站在引擎的位置回答 mod 會問的事
-const world = (on: On, fiveHour = 23) => {
+const REFUSED = 'no surface places panes'
+
+// 有人要關面板時引擎怎麼回：真的關掉、被別的外掛擋下、說好但其實沒關
+type Closing = 'closes' | 'denied' | 'ignored'
+
+// 站在引擎的位置回答 mod 會問的事。isPlaced 是 false＝介面不放面板
+const world = (on: On, { fiveHour = 23, isPlaced = true } = {}) => {
   const time = mock.clock(on, { now: T0 })
   let listed: readonly AgentInfo[] = []
   let panes: readonly string[] = []
+  let toasts: readonly string[] = []
+  let closing: Closing = 'closes'
+  let duringList: (() => Promise<unknown>) | null = null
   let listCalls = 0
   let opens = 0
 
@@ -74,25 +82,44 @@ const world = (on: On, fiveHour = 23) => {
   }))
   on('command.register', (_, e) => ({ value: { command: e.name } }))
   on('tool.register', (_, e) => ({ value: { tool: `mcp__session-overview__${e.name}` } }))
-  on('agent.list', () => {
+  on('agent.list', async () => {
     listCalls += 1
+    const snapshot = [...listed]
 
-    return { value: [...listed] }
+    // 讓測試能在「清單已經讀出、還沒回到 mod」的空檔插一件事進去
+    if (duringList !== null) {
+      const interrupt = duringList
+      duringList = null
+      await interrupt()
+    }
+
+    return { value: snapshot }
   })
   on('ui.open', (_, e) => {
     opens += 1
     panes = [...panes.filter(id => id !== e.id), e.id]
 
-    return { value: { isPlaced: true } }
+    return { value: isPlaced ? { isPlaced: true } : { isPlaced: false, reason: REFUSED } }
   })
   on('ui.close', (_, e) => {
-    panes = panes.filter(id => id !== e.id)
+    if (closing === 'denied') {
+      return { deny: '另一個外掛不讓它關' }
+    }
+
+    if (closing === 'closes') {
+      panes = panes.filter(id => id !== e.id)
+    }
 
     return { value: undefined }
   })
   on('ui.panes', () => ({
-    value: panes.map(id => ({ id, title: id, isShown: true, isFocused: false, isPlaced: true })),
+    value: panes.map(id => ({ id, title: id, isShown: true, isFocused: false, isPlaced })),
   }))
+  on('ui.toast', (_, e) => {
+    toasts = [...toasts, e.text]
+
+    return { value: undefined }
+  })
   on('ui.log', () => ({ value: undefined }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('session.measure', (_, e) => ({ changed: e.changed }))
@@ -107,6 +134,14 @@ const world = (on: On, fiveHour = 23) => {
     },
     listCalls: () => listCalls,
     opens: () => opens,
+    toasts: () => toasts,
+    isOpen: () => panes.includes('session-overview'),
+    closeAttempts: (next: Closing) => {
+      closing = next
+    },
+    whileListing: (interrupt: () => Promise<unknown>) => {
+      duringList = interrupt
+    },
   }
 }
 
@@ -224,7 +259,7 @@ test('在 mod 記到之前就在跑的助手只顯示「在跑」，不亂算已
 })
 
 test('額度快用完時那一行變紅，沒快用完的不變色', async ($, on) => {
-  world(on, 93)
+  world(on, { fiveHour: 93 })
   await start($)
 
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
@@ -300,15 +335,90 @@ test('Claude 可以自己開、關面板，並拿到有沒有開成功', async (
   expect(await panel($, 'close', 'tu3')).toMatchObject({ isOpen: false })
 })
 
-test('/clear 之後舊的用量不留在面板上', async ($, on) => {
+test('/clear 之後舊的對話空間和花費不留在面板上，額度留著', async ($, on) => {
   world(on)
   await start($)
-  expect(await shown($)).toContain('18%')
+  const before = await shown($)
+  expect(before).toContain('18%')
+  expect(before).toContain('US$ 4.20')
+  expect(before).toContain('5 小時額度')
 
   await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } })
   const after = await shown($)
-  expect(after).toContain('等第一次回應後才有讀數')
+  expect(after).toContain('對話空間')
+  expect(after).toContain('—')
   expect(after).not.toContain('18%')
+  expect(after).not.toContain('US$ 4.20')
+  expect(after).toContain('5 小時額度')
+})
+
+for (const how of ['denied', 'ignored'] as const) {
+  test(`面板沒真的被關掉（${how}）就不算「不想看」，重新載入照樣開回來`, { plugins: [CLOSER] }, async ($, on) => {
+    const { time, opens, isOpen, closeAttempts } = world(on)
+    await start($)
+    await run($, '')
+    closeAttempts(how)
+    await closeIt($)
+    expect(isOpen()).toBe(true)
+
+    const before = opens()
+    await start($)
+    await time.settle()
+    expect(opens()).toBe(before + 1)
+  })
+}
+
+test('介面不放面板時照實說：指令、Claude 的開關、重新載入的提醒都帶原因', async ($, on) => {
+  const { time, toasts } = world(on, { isPlaced: false })
+  await start($)
+
+  expect((await run($, '')).text).toBe(`總覽面板還沒顯示：${REFUSED}`)
+  expect(await panel($, 'open', 'tu1')).toEqual({
+    action: 'open',
+    isPlaced: false,
+    isOpen: true,
+    reason: REFUSED,
+  })
+
+  await start($)
+  await time.settle()
+  expect(toasts().at(-1)).toBe(`總覽面板還沒顯示，打 /overview 可以直接打開。（${REFUSED}）`)
+})
+
+test('/clear 剛好撞上正在更新清單時，舊的助手不會復活賴著不走', async ($, on) => {
+  const { time, list, whileListing } = world(on)
+  await start($)
+  await run($, '')
+  await $.agent.spawn(SPAWN)
+  list([REVIEWER])
+  await time.advance(5_000)
+  expect(await shown($)).toContain('助手（1 個在跑）')
+
+  // 下一次更新：引擎先交出 /clear 之前的清單，/clear 在這份清單回到 mod 之前發生
+  whileListing(async () => {
+    list([])
+    await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } })
+  })
+  await time.advance(5_000)
+  await time.advance(10_000)
+  expect(await shown($)).toContain('目前沒有助手在跑')
+})
+
+test('/clear 之後引擎還列著的助手會回來，但只顯示「在跑」', async ($, on) => {
+  const { time, list } = world(on)
+  await start($)
+  await run($, '')
+  await $.agent.spawn(SPAWN)
+  list([REVIEWER])
+  await time.advance(60_000)
+  expect((await shown($)).some(text => text.startsWith('已跑'))).toBe(true)
+
+  await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } })
+  await time.advance(5_000)
+  const after = await shown($)
+  expect(after).toContain('助手（1 個在跑）')
+  expect(after).toContain('在跑')
+  expect(after.some(text => text.startsWith('已跑'))).toBe(false)
 })
 
 test('純計算：時間寫法、還沒對過時間不印倒數、數字寫法、回合結束原因對應的狀態', () => {
@@ -345,6 +455,14 @@ test('助手清單：只沿用自己記到的開始時間、結束時間只記�
 
   const later = mergeAgents(finished, [{ ...REVIEWER, status: 'completed' }], 99_000)
   expect(later[0]).toMatchObject({ startedAt: 1_000, endedAt: 61_000 })
+
+  // 第一次看到就已經結束的：開始和結束時間都不知道，不亂猜
+  const unknown = mergeAgents([], [{ ...REVIEWER, status: 'completed' }], 5_000)
+  expect(unknown[0]).toMatchObject({ startedAt: null, endedAt: null, status: 'completed' })
+
+  // 清單裡已經沒有的：掛勾記到開始時間的留著，沒有開始時間又在跑的丟掉
+  expect(mergeAgents(seen, [], 2_000)).toHaveLength(1)
+  expect(mergeAgents(unseen, [], 2_000)).toHaveLength(0)
 
   const many = ['a', 'b', 'c', 'd', 'e'].map(id => ({ ...REVIEWER, id, status: 'completed' }))
   expect(mergeAgents([], many, 5_000)).toHaveLength(3)
